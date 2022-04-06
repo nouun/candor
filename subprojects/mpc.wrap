@@ -1,0 +1,9 @@
+[wrap-file]
+directory = mpc-master
+source_url = https://github.com/orangeduck/mpc/archive/refs/heads/master.tar.gz
+source_filename = master.tar.gz
+source_hash = dd91b1935a805ad3e27bcbd62bc9962b2ce4bdfa80d215436ebec7f7a396d3c7
+patch_directory = mpc
+
+[provide]
+mpc = mpc_dep

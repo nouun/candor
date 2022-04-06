@@ -1,0 +1,30 @@
+* Candor
+
+A project lisp created while learning C, it is based off of
+the [[https://buildyourownlisp.com][Build Your Own Lisp]]
+series. The syntax follows closer to Scheme rather than the
+syntax used by BYOL.
+
+** Note
+
+Candor was built as a learning project to get some practical
+experience with C rather than reading a bunch of books. This
+should not be used as it is rather slow and is missing many
+features.
+
+** TODO
+
+  - [ ] String manipulation
+    - [ ] Substring
+    - [ ] Splitting
+    - [ ] Contains
+  - [ ] Unquoting
+  - [ ] Improve function args
+    - [ ] Optional
+    - [ ] Keyed
+    - [ ] Rest
+  - [-] CLI options
+    - [X] Running =.cndr= file
+    - [ ] Passing string
+  - [X] Loading external files
+  - [ ] Some sort of stdlib which can be imported globally

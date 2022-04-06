@@ -1,0 +1,8 @@
+/builddir/
+/.ccls-cache/
+/compile_commands.json
+
+/subprojects/mpc-master/
+/subprojects/packagecache/
+
+/README.html
