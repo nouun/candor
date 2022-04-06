@@ -10,7 +10,9 @@ syntax used by BYOL.
 Candor was built as a learning project to get some practical
 experience with C rather than reading a bunch of books. This
 should not be used as it is rather slow and is missing many
-features.
+features. Feel free to give critism or feedback on anything
+as I'm always learning and happy to learn how I could have
+done something better.
 
 ** TODO
 
@@ -23,7 +25,7 @@ features.
     - [ ] Optional
     - [ ] Keyed
     - [ ] Rest
-  - [-] CLI options
+  - [-] CLI options [1/2]
     - [X] Running =.cndr= file
     - [ ] Passing string
   - [X] Loading external files
