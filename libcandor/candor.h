@@ -1,7 +1,10 @@
 #ifndef CANDOR_H
 #define CANDOR_H
 
+#include "builtins.h"
 #include "cval.h"
+
+#include <mpc.h>
 
 extern mpc_parser_t* Candor;
 

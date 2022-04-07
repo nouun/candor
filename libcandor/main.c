@@ -1,4 +1,4 @@
-#include <libcandor/candor.h>
+#include <src/candor.h>
 
 #include <mpc.h>
 #include <stdio.h>

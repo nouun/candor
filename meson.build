@@ -1,12 +1,12 @@
 project('candor', 'c')
 candor_sources = [
-  'src/main.c',
-  'src/cval.c',
-  'src/builtins.c',
-  'src/builtins/conditional.c',
-  'src/builtins/list.c',
-  'src/builtins/math.c',
-  'src/builtins/sugar.c',
+  'libcandor/candor.c',
+  'libcandor/cval.c',
+  'libcandor/builtins.c',
+  'libcandor/builtins/conditional.c',
+  'libcandor/builtins/list.c',
+  'libcandor/builtins/math.c',
+  'libcandor/builtins/sugar.c',
 ]
 
 mpc     = dependency('mpc')
@@ -16,23 +16,35 @@ incdirs = include_directories([
   'subprojects',
 ])
 
-candor_lib = library(
-  'candor',
-  candor_sources,
-  dependencies : [
-    libedit,
-    mpc,
-  ],
-  include_directories: incdirs,
+install_headers(
+  'libcandor/candor.h',
+  'libcandor/cval.h',
 )
 
+libcandor = library(
+  'libcandor',
+  candor_sources,
+  include_directories: incdirs,
+  dependencies: [
+    mpc,
+  ],
+)
+
+pkg = import('pkgconfig')
+pkg.generate(libcandor)
   
+libcandor_dep = declare_dependency(
+  include_directories: incdirs,
+  link_with: libcandor,
+)
+
 executable(
   'candor',
-  candor_sources,
-  dependencies : [
+  'src/main.c',
+  include_directories: incdirs,
+  dependencies: [
+    libcandor_dep,
     libedit,
     mpc,
   ],
-  include_directories: incdirs,
 )
