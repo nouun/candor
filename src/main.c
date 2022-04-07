@@ -1,5 +1,4 @@
 #include <libcandor/candor.h>
-
 #include <mpc.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,7 +34,7 @@ void shutdown(void) {
     mpc_err_delete(mpc_result.error);
   }
 
-  
+
   candor_deinit();
   rl_uninitialize();
 }
@@ -44,18 +43,18 @@ int main(int argc, char** argv) {
   candor_env = cenv_new();
   candor_init(candor_env);
   atexit(shutdown);
-  
+
   if (argc >= 2) {
-    for(int i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
       cval* args = cval_add(cval_sexpr(), cval_str(argv[i]));
-      cval* res = builtin_load(candor_env, args);
-      if(res->type == CVAL_ERR) { cval_println(res); }
+      cval* res  = builtin_load(candor_env, args);
+      if (res->type == CVAL_ERR) { cval_println(res); }
       cval_del(res);
     }
-    
+
     return 0;
   }
-  
+
   puts("candor v0.1.0");
 
   while (1) {
@@ -68,8 +67,8 @@ int main(int argc, char** argv) {
       cval* result = cval_read(mpc_result.output);
       while (result->count) {
         cval* out = cval_eval(candor_env, cval_pop(result, 0));
-        
-        if(!result->count) {
+
+        if (!result->count) {
           cval_println(out);
           cval_del(out);
         }
@@ -77,7 +76,7 @@ int main(int argc, char** argv) {
 
       cval_del(result);
       mpc_ast_delete(mpc_result.output);
-    } else if(mpc_result.error) {
+    } else if (mpc_result.error) {
       mpc_err_print(mpc_result.error);
       mpc_err_delete(mpc_result.error);
     }
@@ -87,4 +86,3 @@ int main(int argc, char** argv) {
 
   return 0;
 }
-

@@ -11,7 +11,7 @@ static mpc_parser_t* Nonquot;
 static mpc_parser_t* Sexpr;
 static mpc_parser_t* Expr;
 static mpc_parser_t* Comment;
-mpc_parser_t* Candor;
+mpc_parser_t*        Candor;
 
 void candor_init(cenv* env) {
   Number  = mpc_new("number");
@@ -38,20 +38,21 @@ void candor_init(cenv* env) {
             "expr                    : <quot> | <qquot> | <nonquot>      ; "
             "comment \"comment\"     : /;[^\\r\\n]*/                     ; "
             "candor                  : /^/ <expr>* /$/                   ; ",
-            Number, String, Keyword, Quot, Qquot, Nonquot, Sexpr, Expr, Comment, Candor);
+            Number, String, Keyword, Quot, Qquot, Nonquot, Sexpr, Expr, Comment,
+            Candor);
 
 
   cenv_add_builtins(env);
 }
 
-void candor_deinit(void) {  
+void candor_deinit(void) {
   mpc_cleanup(10, Number, String, Keyword, Nonquot, Qquot, Quot, Sexpr, Expr,
               Comment, Candor);
 }
 
 cval* candor_parse(const char* filename, char* str) {
   mpc_result_t res;
-  if(mpc_parse(filename, str, Candor, &res)){
+  if (mpc_parse(filename, str, Candor, &res)) {
     cval* val = cval_read(res.output);
 
     mpc_ast_delete(res.output);
@@ -68,4 +69,3 @@ cval* candor_parse(const char* filename, char* str) {
     return err;
   }
 }
-

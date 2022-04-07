@@ -24,7 +24,7 @@ cval* builtin_eq(cenv* env, cval* arg) {
 
   while (arg->count) {
     cval* cell = cval_pop(arg, 0);
-    cval* cmp = cval_eval(env, cell);
+    cval* cmp  = cval_eval(env, cell);
     if (cmp->type == CVAL_ERR) {
       cval* err = cval_copy(cmp);
 
@@ -58,8 +58,8 @@ cval* builtin_ord(cenv* env, char op, cval* arg) {
     cval* val = cval_eval(env, cval_pop(arg, 0));
     CASSERT_TYPE(arg, op, val, CVAL_NUM);
 
-    if((op == '<' && !(out->num < val->num)) ||
-       (op == '>' && !(out->num > val->num))) {
+    if ((op == '<' && !(out->num < val->num))
+        || (op == '>' && !(out->num > val->num))) {
       cval_del(val);
       cval_del(out);
       cval_del(arg);
@@ -87,7 +87,7 @@ cval* builtin_gt(cenv* env, cval* arg) {
 void cenv_add_builtins_conditional(cenv* env) {
   cenv_add_builtin_macro(env, "if", builtin_if);
   cenv_add_builtin_macro(env, "eq?", builtin_eq);
-  
+
   cenv_add_builtin_macro(env, "lt?", builtin_lt);
   cenv_add_builtin_macro(env, "gt?", builtin_gt);
 }

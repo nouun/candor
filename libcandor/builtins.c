@@ -17,24 +17,24 @@ cval* builtin_load(cenv* env, cval* arg) {
     strcpy(name, val->str);
   }
   cval_del(val);
-  
+
   size_t len = strlen(name);
-  if ((5 >  len) || strncmp(name + len - 5, ".cndr", 5) != 0) {
+  if ((5 > len) || strncmp(name + len - 5, ".cndr", 5) != 0) {
     char* bak = malloc(len + 1);
     strcpy(bak, name);
     free(name);
-    
+
     name = malloc(len + 6);
     sprintf(name, "%s.cndr", bak);
-    
+
     free(bak);
   }
-  
+
   mpc_result_t res;
   if (mpc_parse_contents(name, Candor, &res)) {
     cval* file = cval_read(res.output);
     mpc_ast_delete(res.output);
-    
+
     while (file->count) {
       cval* cell = cval_pop(file, 0);
       cval* expr = cval_eval(env, cell);
@@ -251,12 +251,10 @@ cval* builtin_typeof(cenv* env, cval* arg) {
 
 void cenv_add_builtin_str(cenv* env, char* name, char* str) {
   cval* vals = candor_parse(name, str);
-  while(vals->count) {
+  while (vals->count) {
     cval* val = cval_pop(vals, 0);
     cval* res = cval_eval(env, val);
-    if (res->type == CVAL_ERR) {
-      cval_println(res);
-    }
+    if (res->type == CVAL_ERR) { cval_println(res); }
     cval_del(res);
     cval_del(val);
   }

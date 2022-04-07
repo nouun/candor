@@ -55,7 +55,7 @@
   }
 
 
-#define CASSERT(args, cond, fmt, ...)                                      \
+#define CASSERT(args, cond, fmt, ...)                                          \
   if (!(cond)) {                                                               \
     cval* err = cval_err(fmt, ##__VA_ARGS__);                                  \
     cval_del(args);                                                            \

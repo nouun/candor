@@ -6,7 +6,7 @@ cval* builtin_head(cenv* env, cval* arg) {
   CASSERT_COUNT(arg, "head", 1);
   CASSERT_TYPE(arg, "head", arg->cell[0], CVAL_SEXPR);
   CASSERT(arg, arg->cell[0]->count != 0,
-              "func(head): index out of bounds, empty sexpr");
+          "func(head): index out of bounds, empty sexpr");
 
   cval* val = cval_take(arg, 0);
   return cval_take(val, 0);
@@ -16,7 +16,7 @@ cval* builtin_tail(cenv* env, cval* arg) {
   CASSERT_COUNT(arg, "tail", 1);
   CASSERT_TYPE(arg, "tail", arg->cell[0], CVAL_SEXPR);
   CASSERT(arg, arg->cell[0]->count != 0,
-              "func(tail): Index out of bounds, empty sexpr");
+          "func(tail): Index out of bounds, empty sexpr");
 
   cval* val = cval_take(arg, 0);
   cval_del(cval_pop(val, 0));

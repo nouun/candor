@@ -16,13 +16,13 @@ void cenv_add_builtins_sugar(cenv* env) {
   cenv_add_builtin_var(env, "false", cval_num(0));
   cenv_add_builtin_var(env, "f", cval_num(0));
 
-/*   cenv_add_builtin_str(env, "<std-lib-sugar>", "            \ */
-/* (defun (err? val)     (eq? \"<error>\"       (typeof val))) \ */
-/* (defun (fun? val)     (eq? \"<function>\"    (typeof val))) \ */
-/* (defun (mcr? val)     (eq? \"<macro>\"       (typeof val))) \ */
-/* (defun (num? val)     (eq? \"<number>\"      (typeof val))) \ */
-/* (defun (str? val)     (eq? \"<string>\"      (typeof val))) \ */
-/* (defun (sexpr? val)   (eq? \"<sexpression>\" (typeof val))) \ */
-/* (defun (keyword? val) (eq? \"<keyword>\"     (typeof val))) \ */
-/* "); */
+  /*   cenv_add_builtin_str(env, "<std-lib-sugar>", "            \ */
+  /* (defun (err? val)     (eq? \"<error>\"       (typeof val))) \ */
+  /* (defun (fun? val)     (eq? \"<function>\"    (typeof val))) \ */
+  /* (defun (mcr? val)     (eq? \"<macro>\"       (typeof val))) \ */
+  /* (defun (num? val)     (eq? \"<number>\"      (typeof val))) \ */
+  /* (defun (str? val)     (eq? \"<string>\"      (typeof val))) \ */
+  /* (defun (sexpr? val)   (eq? \"<sexpression>\" (typeof val))) \ */
+  /* (defun (keyword? val) (eq? \"<keyword>\"     (typeof val))) \ */
+  /* "); */
 }
