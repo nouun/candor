@@ -3,10 +3,10 @@
 #include <stdio.h>
 cval* builtin_if(cenv* env, cval* arg) {
   CASSERT_COUNT(arg, "if", 3);
-  arg->cell[0] = cval_eval(env, arg->cell[0]);
-  CASSERT_TYPE(arg, "if", arg->cell[0], CVAL_NUM);
+  arg->sexpr->cell[0] = cval_eval(env, arg->sexpr->cell[0]);
+  CASSERT_TYPE(arg, "if", arg->sexpr->cell[0], CVAL_NUM);
 
-  if (arg->cell[0]->num == 0) {
+  if (arg->sexpr->cell[0]->num == 0) {
     return cval_eval(env, cval_take(arg, 2));
   } else {
     return cval_eval(env, cval_take(arg, 1));
@@ -22,7 +22,7 @@ cval* builtin_eq(cenv* env, cval* arg) {
     return fst;
   }
 
-  while (arg->count) {
+  while (arg->sexpr->count) {
     cval* cell = cval_pop(arg, 0);
     cval* cmp  = cval_eval(env, cell);
     if (cmp->type == CVAL_ERR) {
@@ -54,7 +54,7 @@ cval* builtin_ord(cenv* env, char op, cval* arg) {
   cval* out = cval_eval(env, cval_pop(arg, 0));
   CASSERT_TYPE(arg, op, out, CVAL_NUM);
 
-  while (arg->count) {
+  while (arg->sexpr->count) {
     cval* val = cval_eval(env, cval_pop(arg, 0));
     CASSERT_TYPE(arg, op, val, CVAL_NUM);
 

@@ -4,15 +4,15 @@
 
 cval* builtin_op(cenv* env, char* op, cval* arg) {
   CASSERT_MIN(arg, op, 2)
-  for (int i = 0; i < arg->count; i++) {
-    CASSERT_TYPE(arg, op, arg->cell[i], CVAL_NUM);
+  for (int i = 0; i < arg->sexpr->count; i++) {
+    CASSERT_TYPE(arg, op, arg->sexpr->cell[i], CVAL_NUM);
   }
 
   cval* out = cval_pop(arg, 0);
 
-  if ((strcmp(op, "-") == 0) && arg->count == 0) { out->num = -out->num; }
+  if ((strcmp(op, "-") == 0) && arg->sexpr->count == 0) { out->num = -out->num; }
 
-  while (arg->count) {
+  while (arg->sexpr->count) {
     cval* y = cval_pop(arg, 0);
 
     if (strcmp(op, "+") == 0) { out->num += y->num; }

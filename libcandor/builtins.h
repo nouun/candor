@@ -5,33 +5,33 @@
 #include "cval.h"
 
 #define CASSERT_COUNT(args, fn, cnt)                                           \
-  if (arg->count != cnt) {                                                     \
+  if (arg->sexpr->count != cnt) {                                                     \
     cval* err = cval_err("func(%s): Expected %li args, got %li", fn, cnt,      \
-                         args->count);                                         \
+                         args->sexpr->count);                                         \
     cval_del(args);                                                            \
     return err;                                                                \
   }
 
 #define CASSERT_RANGE(args, fn, min, max)                                      \
-  if (arg->count > max || arg->count < min) {                                  \
+  if (arg->sexpr->count > max || arg->sexpr->count < min) {                                  \
     cval* err = cval_err("func(%s): Expected %li-%li args, got %li", fn, min,  \
-                         max, args->count);                                    \
+                         max, args->sexpr->count);                                    \
     cval_del(args);                                                            \
     return err;                                                                \
   }
 
 #define CASSERT_MIN(args, fn, min)                                             \
-  if (arg->count < min) {                                                      \
+  if (arg->sexpr->count < min) {                                                      \
     cval* err = cval_err("func(%s): Expected %li or more args, got %s", fn,    \
-                         min, args->count);                                    \
+                         min, args->sexpr->count);                                    \
     cval_del(args);                                                            \
     return err;                                                                \
   }
 
 #define CASSERT_MAX(args, fn, max)                                             \
-  if (arg->count > max) {                                                      \
+  if (arg->sexpr->count > max) {                                                      \
     cval* err = cval_err("func(%s): Expected %li or less args, got %s", fn,    \
-                         min, args->count);                                    \
+                         min, args->sexpr->count);                                    \
     cval_del(args);                                                            \
     return err;                                                                \
   }

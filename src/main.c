@@ -6,52 +6,40 @@
 #ifdef _WIN32
 #include <string.h>
 
-static char buffer[2048];
+#define BUF_SIZE 2048
 
-char* readline(char* prompt) {
+static char buffer[BUF_SIZE];
+
+static char* readline(const char* prompt) {
   fputs(prompt, stdout);
-  fgets(buffer, 2048, stdin);
-  char* cpy = malloc(strlen(buffer) + 1);
+  fgets(buffer, BUF_SIZE, stdin);
+  char* cpy = malloc(BUF_SIZE);
   strcopy(cpy, buffer);
-  cpy[strlen(cpy) + 1] = '\0';
   return cpy;
 }
+
+static void add_history(const char* line) {}
 
 #else
 #include <editline.h>
 #endif
 
-static mpc_result_t mpc_result;
-static cenv*        candor_env;
-
-
-void shutdown(void) {
-  cenv_del(candor_env);
-
-  if (mpc_result.output) {
-    mpc_ast_delete(mpc_result.output);
-  } else if (mpc_result.error) {
-    mpc_err_delete(mpc_result.error);
-  }
-
-
+static void shutdown(void) {
   candor_deinit();
   rl_uninitialize();
 }
 
 int main(int argc, char** argv) {
-  candor_env = cenv_new();
-  candor_init(candor_env);
+  candor_init();
   atexit(shutdown);
 
   if (argc >= 2) {
     for (int i = 1; i < argc; i++) {
-      cval* args = cval_add(cval_sexpr(), cval_str(argv[i]));
-      cval* res  = builtin_load(candor_env, args);
+      cval* res = candor_load_file(argv[i]);
       if (res->type == CVAL_ERR) { cval_println(res); }
       cval_del(res);
     }
-
+    
     return 0;
   }
 
@@ -63,24 +51,10 @@ int main(int argc, char** argv) {
 
     if (!input) { break; }
 
-    if (mpc_parse("<stdin>", input, Candor, &mpc_result)) {
-      cval* result = cval_read(mpc_result.output);
-      while (result->count) {
-        cval* out = cval_eval(candor_env, cval_pop(result, 0));
-
-        if (!result->count) {
-          cval_println(out);
-          cval_del(out);
-        }
-      }
-
-      cval_del(result);
-      mpc_ast_delete(mpc_result.output);
-    } else if (mpc_result.error) {
-      mpc_err_print(mpc_result.error);
-      mpc_err_delete(mpc_result.error);
-    }
-
+    cval* res = candor_load("<stdin>", input);
+    cval_println(res);
+    cval_del(res);
+    
     free(input);
   }
 
