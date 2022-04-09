@@ -6,7 +6,6 @@ candor_sources = [
   'libcandor/builtins/conditional.c',
   'libcandor/builtins/list.c',
   'libcandor/builtins/math.c',
-  'libcandor/builtins/sugar.c',
 ]
 
 mpc     = dependency('mpc')

@@ -45,7 +45,7 @@ void candor_init(void) {
             cndr_number, cndr_string, cndr_keyword, cndr_quot, cndr_qquot,
             cndr_nonquot, cndr_sexpr, cndr_expr, cndr_comment, candor_parser);
 
-  candor_env = cenv_new(NULL);
+  candor_env = cenv_new();
   cenv_add_builtins(candor_env);
 }
 

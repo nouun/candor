@@ -69,7 +69,7 @@ cval* builtin_eval(cenv* env, cval* arg) {
   return out;
 }
 
-cval* builtin_def(cenv* env, cval* arg) {
+cval* builtin_def(cenv* env, cval* arg, bool local) {
   CASSERT_RANGE(arg, "def", 1, 2);
   CASSERT_TYPE(arg, "def", arg->sexpr->cell[0], CVAL_KYWD);
 
@@ -89,11 +89,25 @@ cval* builtin_def(cenv* env, cval* arg) {
     val = arg->sexpr->cell[2];
   }
 
-  cenv_def(env, arg->sexpr->cell[0], val);
+  if (local) {
+    cenv_put(env, arg->sexpr->cell[0], val);
+  } else {
+    cenv_def(env, arg->sexpr->cell[0], val);
+  }
+
   cval_del(arg);
 
   return cval_sexpr();
 }
+
+cval* builtin_def_local(cenv* env, cval* arg) {
+  return builtin_def(env, arg, true);
+}
+
+cval* builtin_def_global(cenv* env, cval* arg) {
+  return builtin_def(env, arg, false);
+}
+
 
 cval* builtin_lambda(cenv* env, cval* arg) {
   CASSERT_COUNT(arg, "lambda", 2);
@@ -102,7 +116,7 @@ cval* builtin_lambda(cenv* env, cval* arg) {
   return cval_fun(arg->sexpr->cell[0], arg->sexpr->cell[1]);
 }
 
-cval* builtin_defun(cenv* env, cval* arg) {
+cval* builtin_defun(cenv* env, cval* arg, bool local) {
   CASSERT_RANGE(arg, "defun", 2, 3);
   CASSERT_TYPE2(arg, "defun", arg->sexpr->cell[0], CVAL_KYWD, CVAL_SEXPR);
 
@@ -127,12 +141,24 @@ cval* builtin_defun(cenv* env, cval* arg) {
 
   cval* lambda = cval_fun(params, fun);
 
-  cenv_def(env, key, lambda);
+  if (local) {
+    cenv_put(env, key, lambda);
+  } else {
+    cenv_def(env, key, lambda);
+  }
   cval_del(lambda);
   cval_del(key);
   cval_del(arg);
 
   return cval_sexpr();
+}
+
+cval* builtin_defun_local(cenv* env, cval* arg) {
+  return builtin_defun(env, arg, true);
+}
+
+cval* builtin_defun_global(cenv* env, cval* arg) {
+  return builtin_defun(env, arg, false);
 }
 
 cval* builtin_defmacro(cenv* env, cval* arg) {
@@ -154,6 +180,7 @@ cval* builtin_defmacro(cenv* env, cval* arg) {
   cval* fun;
   if (arg->sexpr->count == 1) {
     fun = cval_copy(arg->sexpr->cell[0]);
+
   } else {
     fun = cval_copy(arg->sexpr->cell[1]);
   }
@@ -247,8 +274,10 @@ void cenv_add_builtins(cenv* env) {
   cenv_add_builtin(env, "typeof", builtin_typeof);
 
   cenv_add_builtin_macro(env, "defmcr", builtin_defmacro);
-  cenv_add_builtin_macro(env, "def", builtin_def);
-  cenv_add_builtin_macro(env, "defun", builtin_defun);
+  cenv_add_builtin_macro(env, "def", builtin_def_local);
+  cenv_add_builtin_macro(env, "def!", builtin_def_global);
+  cenv_add_builtin_macro(env, "defun", builtin_defun_local);
+  cenv_add_builtin_macro(env, "defun!", builtin_defun_global);
   cenv_add_builtin_macro(env, "lambda", builtin_lambda);
 
   cenv_add_builtin(env, "eval", builtin_eval);
@@ -259,5 +288,4 @@ void cenv_add_builtins(cenv* env) {
   cenv_add_builtins_conditional(env);
   cenv_add_builtins_list(env);
   cenv_add_builtins_math(env);
-  cenv_add_builtins_sugar(env);
 }

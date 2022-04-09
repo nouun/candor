@@ -4,6 +4,8 @@
 #include "candor.h"
 #include "cval.h"
 
+#include <stdbool.h>
+
 #define CASSERT_COUNT(args, fn, cnt)                                           \
   if (arg->sexpr->count != cnt) {                                                     \
     cval* err = cval_err("func(%s): Expected %li args, got %li", fn, cnt,      \
@@ -63,14 +65,13 @@
   }
 
 
-cval* builtin_def(cenv* env, cval* arg);
+cval* builtin_def(cenv* env, cval* arg, bool local);
 cval* builtin_load(cenv* env, cval* arg);
 void  cenv_add_builtins(cenv* env);
 
 void cenv_add_builtins_conditional(cenv* env);
 void cenv_add_builtins_list(cenv* env);
 void cenv_add_builtins_math(cenv* env);
-void cenv_add_builtins_sugar(cenv* env);
 
 void cenv_add_builtin_str(cenv* env, char* name, char* str);
 void cenv_add_builtin(cenv* env, char* name, cbuiltin func);

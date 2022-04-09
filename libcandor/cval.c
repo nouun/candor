@@ -2,30 +2,27 @@
 
 #include <errno.h>
 #include <math.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static cval* cval_alloc(CvalType type) {
-  cval* v = malloc(sizeof(cval));
-  v->type = type;
-  return v;
-}
 
 cval* cval_num(long num) {
-  cval* v = cval_alloc(CVAL_NUM);
-  v->num  = num;
+  cval* v;
+  CVAL_ALLOC_SET(v, CVAL_NUM, num, num);
   return v;
 }
 
 cval* cval_str(char* str) {
-  cval* v = cval_alloc(CVAL_STR);
-  v->str  = strdup(str);
+  cval* v;
+  CVAL_ALLOC_SET(v, CVAL_STR, str, strdup(str));
   return v;
 }
 
 cval* cval_err(char* fmt, ...) {
-  cval* v = cval_alloc(CVAL_ERR);
+  cval* v;
+  CVAL_ALLOC(v, CVAL_ERR);
 
   va_list va;
   va_start(va, fmt);
@@ -40,13 +37,14 @@ cval* cval_err(char* fmt, ...) {
 }
 
 cval* cval_kywd(char* kywd) {
-  cval* v = cval_alloc(CVAL_KYWD);
-  v->kywd = strdup(kywd);
+  cval* v;
+  CVAL_ALLOC_SET(v, CVAL_KYWD, kywd, strdup(kywd));
   return v;
 }
 
 cval* cval_sexpr(void) {
-  cval* v            = cval_alloc(CVAL_SEXPR);
+  cval* v;
+  CVAL_ALLOC(v, CVAL_SEXPR);
   v->sexpr           = malloc(sizeof(sexpr));
   v->sexpr->capacity = 4;
   v->sexpr->count    = 0;
@@ -55,33 +53,34 @@ cval* cval_sexpr(void) {
 }
 
 cval* cval_qquot(cval* val) {
-  cval* v = cval_alloc(CVAL_QQUOT);
-  v->quot = val;
+  cval* v;
+  CVAL_ALLOC_SET(v, CVAL_QQUOT, quot, val);
   return v;
 }
 
 cval* cval_quot(cval* val) {
-  cval* v = cval_alloc(CVAL_QUOT);
-  v->quot = val;
+  cval* v;
+  CVAL_ALLOC_SET(v, CVAL_QUOT, quot, val);
   return v;
 }
 
 cval* cval_bfun(const cbuiltin func) {
-  cval* v    = cval_alloc(CVAL_BFUN);
-  v->builtin = func;
+  cval* v;
+  CVAL_ALLOC_SET(v, CVAL_BFUN, builtin, func);
   return v;
 }
 
 cval* cval_bmcr(const cbuiltin func) {
-  cval* v    = cval_alloc(CVAL_BMCR);
-  v->builtin = func;
+  cval* v;
+  CVAL_ALLOC_SET(v, CVAL_BMCR, builtin, func);
   return v;
 }
 
 cval* cval_fun(cval* params, cval* body) {
-  cval* v             = cval_alloc(CVAL_FUN);
+  cval* v;
+  CVAL_ALLOC(v, CVAL_FUN);
   v->function         = malloc(sizeof(user_function));
-  v->function->env    = cenv_new(NULL);
+  v->function->env    = cenv_new();
   v->function->params = params;
   v->function->body   = body;
   return v;
@@ -93,7 +92,7 @@ cval* cval_mcr(cval* params, cval* body) {
   return v;
 }
 
-void user_function_del(user_function* val) {
+static void user_function_del(user_function* val) {
   cenv_del(val->env);
   cval_del(val->params);
   cval_del(val->body);
@@ -130,7 +129,7 @@ int sexpr_cmp(sexpr* lhs, sexpr* rhs) {
   }
 }
 
-int cval_cmp(cval* lhs, cval* rhs) {
+bool cval_cmp(cval* lhs, cval* rhs) {
   if (lhs->type != rhs->type) { return 0; }
 
   switch (lhs->type) {
@@ -196,6 +195,7 @@ void cval_println(cval* val) {
   putchar('\n');
 }
 
+// Forward declare cenv_copy as cval_copy and cenv_copy call each other
 cenv* cenv_copy(const cenv* env);
 
 cval* cval_copy(const cval* val) {
@@ -235,9 +235,9 @@ cval* cval_copy(const cval* val) {
   return out;
 }
 
-cenv* cenv_new(cenv* parent) {
+cenv* cenv_new(void) {
   cenv* env     = malloc(sizeof(cenv));
-  env->par      = parent;
+  env->par      = NULL;
   env->capacity = CENV_SIZE_BASE;
   env->count    = 0;
   env->keys     = malloc(sizeof(cval*) * env->count);
@@ -292,16 +292,19 @@ void cenv_put(cenv* env, cval* key, cval* val) {
   for (int i = 0; i < env->count; i++) {
     if (strcmp(env->keys[i], key->kywd) == 0) {
       cval_del(env->vals[i]);
-      env->vals[i] = val;
+      env->vals[i] = cval_copy(val);
       return;
     }
   }
 
   env->count++;
+  int capacity = env->capacity;
   while (env->count >= env->capacity) { env->capacity += CENV_SIZE_INCR; }
 
-  env->vals = realloc(env->vals, sizeof(cval*) * env->capacity);
-  env->keys = realloc(env->keys, sizeof(char*) * env->capacity);
+  if (env->capacity != capacity) {
+    env->vals = realloc(env->vals, sizeof(cval*) * env->capacity);
+    env->keys = realloc(env->keys, sizeof(char*) * env->capacity);
+  }
 
   env->vals[env->count - 1] = cval_copy(val);
   env->keys[env->count - 1] = malloc(strlen(key->kywd) + 1);
@@ -331,12 +334,16 @@ cval* cval_read_str(mpc_ast_t* tree) {
 cval* cval_add(cval* val, cval* child) {
   val->sexpr->count++;
 
+  int capacity = val->sexpr->capacity;
   while (val->sexpr->count >= val->sexpr->capacity) {
     val->sexpr->capacity *= 2;
   }
 
-  val->sexpr->cell
-    = realloc(val->sexpr->cell, sizeof(cval*) * val->sexpr->capacity);
+  if (val->sexpr->capacity != capacity) {
+    val->sexpr->cell
+      = realloc(val->sexpr->cell, sizeof(cval*) * val->sexpr->capacity);
+  }
+
   val->sexpr->cell[val->sexpr->count - 1] = child;
 
   return val;
@@ -386,6 +393,7 @@ cval* cval_take(cval* val, int idx) {
   return out;
 }
 
+/// Call fun with args
 cval* cval_call(cenv* env, cval* fun, cval* args) {
   if (fun->type == CVAL_BFUN || fun->type == CVAL_BMCR) {
     return fun->builtin(env, args);
@@ -395,7 +403,6 @@ cval* cval_call(cenv* env, cval* fun, cval* args) {
     cval* err
       = cval_err("Expected %li args, got %li",
                  fun->function->params->sexpr->count, args->sexpr->count);
-    cval_del(args);
     return err;
   }
 
@@ -408,8 +415,6 @@ cval* cval_call(cenv* env, cval* fun, cval* args) {
                args->sexpr->cell[i]);
     }
   }
-
-  cval_del(args);
 
   fun->function->env->par = env;
   cval* res = cval_eval(fun->function->env, cval_copy(fun->function->body));
@@ -442,6 +447,7 @@ cval* cval_eval_sexpr(cenv* env, cval* val) {
 
   cval* result = cval_call(env, fun, val);
   cval_del(fun);
+  cval_del(val);
 
   return result;
 }
