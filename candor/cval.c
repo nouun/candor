@@ -1,7 +1,12 @@
+#include "cval.h"
+
 #include "candor.h"
+#include "cenv.h"
+#include "parser.h"
 
 #include <errno.h>
 #include <math.h>
+#include <mpc.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -112,6 +117,7 @@ void cval_del(cval* val) {
     for (int i = 0; i < val->sexpr->count; i++) {
       cval_del(val->sexpr->cell[i]);
     }
+    free(val->sexpr->cell);
     free(val->sexpr);
   }
 
@@ -195,9 +201,6 @@ void cval_println(cval* val) {
   putchar('\n');
 }
 
-// Forward declare cenv_copy as cval_copy and cenv_copy call each other
-cenv* cenv_copy(const cenv* env);
-
 cval* cval_copy(const cval* val) {
   cval* out = malloc(sizeof(cval));
   out->type = val->type;
@@ -223,9 +226,10 @@ cval* cval_copy(const cval* val) {
     break;
 
   case CVAL_SEXPR:
-    out->sexpr        = malloc(sizeof(sexpr));
-    out->sexpr->count = val->sexpr->count;
-    out->sexpr->cell  = malloc(sizeof(cval*) * out->sexpr->count);
+    out->sexpr           = malloc(sizeof(sexpr));
+    out->sexpr->count    = val->sexpr->count;
+    out->sexpr->capacity = val->sexpr->capacity;
+    out->sexpr->cell     = malloc(sizeof(cval*) * out->sexpr->capacity);
     for (int i = 0; i < out->sexpr->count; i++) {
       out->sexpr->cell[i] = cval_copy(val->sexpr->cell[i]);
     }
@@ -233,102 +237,6 @@ cval* cval_copy(const cval* val) {
   }
 
   return out;
-}
-
-cenv* cenv_new(void) {
-  cenv* env     = malloc(sizeof(cenv));
-  env->par      = NULL;
-  env->capacity = CENV_SIZE_BASE;
-  env->count    = 0;
-  env->keys     = malloc(sizeof(cval*) * env->count);
-  env->vals     = malloc(sizeof(cval*) * env->count);
-  return env;
-}
-
-void cenv_del(cenv* env) {
-  for (int i = 0; i < env->count; i++) {
-    free(env->keys[i]);
-    cval_del(env->vals[i]);
-  }
-
-  free(env->keys);
-  free(env->vals);
-  free((cenv*)env);
-}
-
-cenv* cenv_copy(const cenv* env) {
-  cenv* e     = malloc(sizeof(cenv));
-  e->par      = env->par;
-  e->count    = env->count;
-  e->capacity = env->capacity;
-  e->keys     = malloc(sizeof(char*) * env->capacity);
-  e->vals     = malloc(sizeof(cval*) * env->capacity);
-  for (int i = 0; i < env->count; i++) {
-    e->keys[i] = malloc(strlen(env->keys[i]) + 1);
-    strcpy(e->keys[i], env->keys[i]);
-    e->vals[i] = cval_copy(env->vals[i]);
-  }
-  return e;
-}
-
-cval* cenv_get(const cenv* env, cval* key) {
-  for (int i = 0; i < env->count; i++) {
-    if (strcmp(env->keys[i], key->kywd) == 0) {
-      return cval_copy(env->vals[i]);
-    }
-  }
-
-  if (env->par) { return cenv_get(env->par, key); }
-
-  return cval_err("unbound keyword '%s'", key->kywd);
-}
-
-void cenv_def(cenv* env, cval* key, cval* val) {
-  while (env->par) { env = env->par; }
-  cenv_put(env, key, val);
-}
-
-void cenv_put(cenv* env, cval* key, cval* val) {
-  for (int i = 0; i < env->count; i++) {
-    if (strcmp(env->keys[i], key->kywd) == 0) {
-      cval_del(env->vals[i]);
-      env->vals[i] = cval_copy(val);
-      return;
-    }
-  }
-
-  env->count++;
-  int capacity = env->capacity;
-  while (env->count >= env->capacity) { env->capacity += CENV_SIZE_INCR; }
-
-  if (env->capacity != capacity) {
-    env->vals = realloc(env->vals, sizeof(cval*) * env->capacity);
-    env->keys = realloc(env->keys, sizeof(char*) * env->capacity);
-  }
-
-  env->vals[env->count - 1] = cval_copy(val);
-  env->keys[env->count - 1] = malloc(strlen(key->kywd) + 1);
-
-  strcpy(env->keys[env->count - 1], key->kywd);
-}
-
-cval* cval_read_num(mpc_ast_t* tree) {
-  errno    = 0;
-  long out = strtol(tree->contents, NULL, 10);
-  return errno != ERANGE ? cval_num(out) : cval_err("invalid number");
-}
-
-cval* cval_read_str(mpc_ast_t* tree) {
-  // Remove trailing "
-  tree->contents[strlen(tree->contents) - 1] = '\0';
-  char* unesc = malloc(strlen(tree->contents) + 1);
-  // Copy without leading "
-  strcpy(unesc, tree->contents + 1);
-  unesc     = mpcf_unescape(unesc);
-  cval* str = cval_str(unesc);
-
-  free(unesc);
-  return str;
 }
 
 cval* cval_add(cval* val, cval* child) {
@@ -347,33 +255,6 @@ cval* cval_add(cval* val, cval* child) {
   val->sexpr->cell[val->sexpr->count - 1] = child;
 
   return val;
-}
-
-cval* cval_read(mpc_ast_t* tree) {
-  if (strstr(tree->tag, "qquot")
-      || (strstr(tree->tag, "quot") && !strstr(tree->tag, "nonquot"))) {
-    cval* sexpr = cval_read(tree->children[1]);
-    return cval_quot(sexpr);
-  }
-
-  if (strstr(tree->tag, "number")) { return cval_read_num(tree); }
-  if (strstr(tree->tag, "string")) { return cval_read_str(tree); }
-  if (strstr(tree->tag, "keyword")) { return cval_kywd(tree->contents); }
-
-  cval* sexpr = NULL;
-  if (strcmp(tree->tag, ">") == 0) { sexpr = cval_sexpr(); }
-  if (strstr(tree->tag, "sexpr")) { sexpr = cval_sexpr(); }
-
-  for (int i = 0; i < tree->children_num; i++) {
-    if (strcmp(tree->children[i]->contents, "(") == 0) { continue; }
-    if (strcmp(tree->children[i]->contents, "'(") == 0) { continue; }
-    if (strcmp(tree->children[i]->contents, ")") == 0) { continue; }
-    if (strcmp(tree->children[i]->tag, "regex") == 0) { continue; }
-    if (strstr(tree->children[i]->tag, "comment")) { continue; }
-    sexpr = cval_add(sexpr, cval_read(tree->children[i]));
-  }
-
-  return sexpr;
 }
 
 cval* cval_pop(cval* val, int idx) {
@@ -445,9 +326,9 @@ cval* cval_eval_sexpr(cenv* env, cval* val) {
     return cval_err("sexpr does not begin with a function");
   }
 
+  // cval_call frees val so we don't need to free it.
   cval* result = cval_call(env, fun, val);
   cval_del(fun);
-  cval_del(val);
 
   return result;
 }

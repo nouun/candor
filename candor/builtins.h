@@ -2,6 +2,7 @@
 #define BUILTINS_H
 
 #include "candor.h"
+#include "cenv.h"
 #include "cval.h"
 
 #include <stdbool.h>

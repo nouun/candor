@@ -1,6 +1,33 @@
 #include "builtins.h"
 
+#include "config.h"
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+cval* builtin_import(cenv* env, cval* arg) {
+  CASSERT_COUNT(arg, "import", 1);
+  cval* val = cval_take(arg, 0);
+  CASSERT_TYPE2(arg, "import", val, CVAL_STR, CVAL_KYWD);
+
+  char* orig_name;
+  if (val->type == CVAL_KYWD) {
+    orig_name = val->kywd;
+  } else {
+    orig_name = val->str;
+  }
+
+  char* stdlib_dir = getenv("CANDOR_STDLIB_DIR");
+  if (!stdlib_dir) { stdlib_dir = STDLIB_DIR; }
+
+  char* name = malloc(strlen(stdlib_dir) + strlen(orig_name) + 7);
+  sprintf(name, "%s/%s.cndr", stdlib_dir, orig_name);
+
+  cval_del(val);
+
+  return cval_load_file(env, name);
+}
 
 cval* builtin_load(cenv* env, cval* arg) {
   CASSERT_COUNT(arg, "load", 1);
@@ -268,6 +295,7 @@ void cenv_add_builtin(cenv* env, char* name, cbuiltin func) {
 }
 
 void cenv_add_builtins(cenv* env) {
+  cenv_add_builtin(env, "import", builtin_import);
   cenv_add_builtin(env, "load", builtin_load);
   cenv_add_builtin(env, "exit", builtin_exit);
   cenv_add_builtin(env, "dump", builtin_dump);

@@ -1,0 +1,7 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#define CANDOR_VERSION "@version@"
+#define STDLIB_DIR "@stdlib@"
+
+#endif

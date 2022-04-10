@@ -1,6 +1,9 @@
 #include "candor.h"
 
+#include "builtins.h"
+#include "cenv.h"
 #include "cval.h"
+#include "parser.h"
 
 #include <mpc.h>
 
@@ -72,21 +75,19 @@ cval* candor_load(const char* filename, const char* str) {
         return out;
       }
 
-      if (val->sexpr->count != 0) {
-        cval_del(out);
-      }
+      if (val->sexpr->count != 0) { cval_del(out); }
     }
 
+    cval_del(val);
     mpc_ast_delete(res.output);
     return out;
   }
 
   char* msg = mpc_err_string(res.error);
-  mpc_err_delete(res.error);
-
   cval* err = cval_err("unable to parse %s:\n%s", filename, msg);
 
   free(msg);
+  mpc_err_delete(res.error);
 
   return err;
 }

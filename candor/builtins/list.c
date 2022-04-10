@@ -34,7 +34,10 @@ cval* builtin_join(cenv* env, cval* arg) {
   while (arg->sexpr->count) {
     cval* other = cval_pop(arg, 0);
 
-    while (other->sexpr->count) { out = cval_add(out, cval_pop(other, 0)); }
+    while (other->sexpr->count) {
+      cval* new = cval_pop(other, 0);
+      out = cval_add(out, new);
+    }
 
     cval_del(other);
   }

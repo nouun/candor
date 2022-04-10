@@ -1,4 +1,6 @@
-#include <libcandor/candor.h>
+#include "config.h"
+
+#include <candor.h>
 #include <mpc.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,9 +44,10 @@ int main(int argc, char** argv) {
     
     return 0;
   }
-
-  puts("candor v0.1.0");
-
+  
+  printf("candor v%s\n", CANDOR_VERSION);
+  printf("%s\n", STDLIB_DIR);
+  
   while (1) {
     char* input = readline("candor > ");
     add_history(input);

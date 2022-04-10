@@ -1,6 +1,7 @@
 #include "../builtins.h"
 
 #include <stdio.h>
+#include <string.h>
 
 cval* builtin_op(cenv* env, char* op, cval* arg) {
   CASSERT_MIN(arg, op, 2)

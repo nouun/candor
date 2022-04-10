@@ -1,0 +1,5 @@
+option(
+  'stdlib',
+  type: 'string',
+  description : 'Directory to install Candor standard library'
+)

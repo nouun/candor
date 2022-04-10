@@ -1,7 +1,7 @@
 #ifndef CANDOR_CVAL_H
 #define CANDOR_CVAL_H
 
-#include <mpc.h>
+#include "candor.h"
 
 #include <stdbool.h>
 
@@ -15,67 +15,7 @@
   CVAL_ALLOC(ptr, cval_type);                                                  \
   ptr->prop = val;
 
-#define CENV_SIZE_BASE 16
-#define CENV_SIZE_INCR 16
-
 #define CVAL_SIZE_BASE 4
-
-struct cval;
-struct cenv;
-typedef struct cval cval;
-typedef struct cenv cenv;
-
-struct cenv {
-  cenv*  par;
-  int    count;
-  int    capacity;
-  char** keys;
-  cval** vals;
-};
-
-typedef cval* (*cbuiltin)(cenv*, cval*);
-
-typedef struct {
-  cenv* env;
-  cval* params;
-  cval* body;
-} user_function;
-
-typedef struct {
-  int           count;
-  int           capacity;
-  struct cval** cell;
-} sexpr;
-
-typedef struct cval {
-  int type;
-
-  union {
-    long           num;
-    char*          str;
-    char*          kywd;
-    char*          err;
-    cbuiltin       builtin;
-    user_function* function;
-    struct cval*   quot;
-    sexpr*         sexpr;
-  };
-
-} cval;
-
-typedef enum {
-  CVAL_NUM,
-  CVAL_STR,
-  CVAL_ERR,
-  CVAL_KYWD,
-  CVAL_SEXPR,
-  CVAL_QUOT,
-  CVAL_QQUOT,
-  CVAL_FUN,
-  CVAL_BFUN,
-  CVAL_MCR,
-  CVAL_BMCR,
-} CvalType;
 
 static char* cval_type_str[]
   = { [CVAL_NUM] = "number",        [CVAL_STR] = "string",
@@ -85,24 +25,12 @@ static char* cval_type_str[]
       [CVAL_BFUN] = "builtin",      [CVAL_MCR] = "macro",
       [CVAL_BMCR] = "builtin-macro" };
 
-/// Create a new cenv
-cenv* cenv_new(void);
-/// Free all keys and values in a cenv
-void  cenv_del(cenv* env);
-
-/// Puts a key and value in the top level cenv, copies val
-void  cenv_def(cenv* env, cval* key, cval* val);
-/// Keys a key a value in the cenv, copies val
-void  cenv_put(cenv* env, cval* key, cval* val);
-/// Gets a value from cenv by key
-cval* cenv_get(const cenv* env, cval* key);
-
 /// Copy cval to new cval
 cval* cval_copy(const cval* val);
 /// Free cval and all assoc values
-void  cval_del(cval* val);
+void cval_del(cval* val);
 /// Compare two cvals
-bool  cval_cmp(cval* lhs, cval* rhs);
+bool cval_cmp(cval* lhs, cval* rhs);
 
 /// Load a file into current cenv
 cval* cval_load_file(cenv* env, const char* filename);
@@ -125,8 +53,6 @@ cval* cval_fun(cval* params, cval* body);
 /// Create a new cval macro, does not copy params or body
 cval* cval_mcr(cval* params, cval* body);
 
-/// Parse an mpc_ast to a cval
-cval* cval_read(mpc_ast_t* tree);
 /// Evaluate and free val
 cval* cval_eval(cenv* env, cval* val);
 
@@ -137,9 +63,5 @@ cval* cval_take(cval* val, int idx);
 /// Take the value at idx and remove from val's cells
 cval* cval_pop(cval* val, int idx);
 
-/// Print val
-void cval_print(cval* val);
-/// Print val followed by a newline
-void cval_println(cval* val);
 
 #endif /* CANDOR_CVAL_H */
