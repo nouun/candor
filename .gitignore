@@ -1,5 +1,6 @@
 /builddir/
 /.ccls-cache/
+/.direnv/
 /compile_commands.json
 
 /subprojects/mpc-master/
