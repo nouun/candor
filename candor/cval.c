@@ -280,31 +280,39 @@ cval* cval_take(cval* val, int idx) {
 /// Call fun with args
 cval* cval_call(cenv* env, cval* fun, cval* args) {
   if (fun->type == CVAL_BFUN || fun->type == CVAL_BMCR) {
-    return fun->builtin(env, args);
+    cval* out = fun->builtin(env, args);
+    cval_del(fun);
+    return out;
   }
 
-  if (args->sexpr->count > fun->function->params->sexpr->count) {
-    cval* err
-      = cval_err("Expected %li args, got %li",
-                 fun->function->params->sexpr->count, args->sexpr->count);
+  user_function* func = fun->function;
+
+  if (args->sexpr->count > func->params->sexpr->count) {
+    cval* err = cval_err("Expected %li args, got %li",
+                         func->params->sexpr->count, args->sexpr->count);
     cval_del(args);
     return err;
   }
 
-  for (int i = 0; i < fun->function->params->sexpr->count; i++) {
-    if (i >= args->sexpr->count) {
-      cenv_put(fun->function->env, fun->function->params->sexpr->cell[i],
-               cval_sexpr());
-    } else {
-      cenv_put(fun->function->env, fun->function->params->sexpr->cell[i],
-               cval_copy(args->sexpr->cell[i]));
-    }
+  while (func->params->sexpr->count) {
+    cval* key = cval_pop(func->params, 0);
+    cval* val;
+    
+    if (args->sexpr->count) val = cval_sexpr();
+    else
+      val = cval_pop(args, 0);
+
+    cenv_put(func->env, key->kywd, val);
+    free(key);
   }
 
   cval_del(args);
 
-  fun->function->env->par = env;
-  cval* res = cval_eval(fun->function->env, cval_copy(fun->function->body));
+  func->env->par = env;
+  cval* res = cval_eval(func->env, fun->function->body);
+
+  cval_del(fun);
+  
   return res;
 }
 
@@ -332,16 +340,14 @@ cval* cval_eval_sexpr(cenv* env, cval* val) {
     return cval_err("sexpr does not begin with a function");
   }
 
-  // cval_call frees val so we don't need to free it.
   cval* result = cval_call(env, fun, val);
-  cval_del(fun);
 
   return result;
 }
 
 cval* cval_eval(cenv* env, cval* val) {
   if (val->type == CVAL_KYWD) {
-    cval* out = cenv_get(env, val);
+    cval* out = cenv_get(env, val->kywd);
     cval_del(val);
     return out;
   }

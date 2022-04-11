@@ -3,84 +3,68 @@
 #include <stdio.h>
 #include <string.h>
 
-cval* builtin_if(cenv* env, cval* arg) {
-  CASSERT_COUNT(arg, "if", 3);
-  arg->sexpr->cell[0] = cval_eval(env, arg->sexpr->cell[0]);
-  CASSERT_NOERR(arg);
-  CASSERT_TYPE(arg, "if", arg->sexpr->cell[0], CVAL_NUM);
+cval* builtin_if(cenv* env, cval* args) {
+  CASSERT_COUNT("if", 3);
+  CEVAL_MACRO_ARG(0);
+  CASSERT_TYPE("if", 0, CVAL_NUM);
 
-  int idx = arg->sexpr->cell[0]->num == 0 ? 2 : 1;
-  return cval_eval(env, cval_take(arg, idx));
+  int idx = args->sexpr->cell[0]->num == 0 ? 2 : 1;
+  return cval_eval(env, cval_take(args, idx));
 }
 
-cval* builtin_eq(cenv* env, cval* arg) {
-  CASSERT_MIN(arg, "=", 2);
+cval* builtin_eq(cenv* env, cval* args) {
+  CASSERT_MIN("=", 2);
 
-  cval* fst = cval_eval(env, cval_pop(arg, 0));
-  if (fst->type == CVAL_ERR) {
-    cval_del(arg);
-    return fst;
-  }
+  CEVAL_MACRO_ARG(0);
+  cval* fst = cval_pop(args, 0);
 
-  while (arg->sexpr->count) {
-    cval* cell = cval_pop(arg, 0);
-    cval* cmp  = cval_eval(env, cell);
-    if (cmp->type == CVAL_ERR) {
-      cval* err = cval_copy(cmp);
-
-      cval_del(fst);
-      cval_del(arg);
-
-      return err;
+  int out = 1;
+  while (args->sexpr->count) {
+    CEVAL_MACRO_ARG(0, cval_del(fst));
+    cval* cmp = cval_pop(args, 0);
+    
+    if (!cval_cmp(fst, cmp)) {
+      out = 0;
+      cval_del(cmp);
+      break;
     }
 
-    if (cval_cmp(fst, cmp)) {
-      cval_del(fst);
-      cval_del(arg);
-
-      return cval_num(1);
-    }
+    cval_del(cmp);
   }
 
   cval_del(fst);
-  cval_del(arg);
+  cval_del(args);
 
-  return cval_num(0);
+  return cval_num(out);
 }
 
-cval* builtin_ord(cenv* env, char* op, cval* arg) {
-  CASSERT_MIN(arg, op, 2);
+cval* builtin_ord(cenv* env, char* op, cval* args) {
+  CASSERT_MIN(op, 2);
+  CEVAL_MACRO_ARG(0);
+  CASSERT_TYPE(op, 0, CVAL_NUM);
 
-  cval* out = cval_eval(env, cval_pop(arg, 0));
-  CASSERT_NOERR(out);
-  CASSERT_TYPE(arg, op, out, CVAL_NUM);
-
-  while (arg->sexpr->count) {
-    cval* val = cval_eval(env, cval_pop(arg, 0));
-    if (val->type == CVAL_ERR) {
-      cval_del(out);
-      cval_del(arg);
-
-      return val;
-    }
-    CASSERT_TYPE(arg, op, val, CVAL_NUM);
-
-    if ((strcmp(op, "lt?") && !(out->num < val->num))
-        || (strcmp(op, "gt?") && !(out->num > val->num))) {
-      cval_del(val);
-      cval_del(out);
-      cval_del(arg);
-      return cval_num(0);
+  int out = 1;
+  cval* cur = cval_pop(args, 0);
+  while (args->sexpr->count) {
+    CEVAL_MACRO_ARG(0, cval_del(cur));
+    CASSERT_TYPE(op, 0, CVAL_NUM, cval_del(cur));
+    
+    cval* val = cval_pop(args, 0);
+    
+    if ((strcmp(op, "lt?") && !(cur->num < val->num))
+        || (strcmp(op, "gt?") && !(cur->num > val->num))) {
+      out = 0;
+      break;
     }
 
-    cval_del(out);
-    out = val;
+    cval_del(cur);
+    cur = val;
   }
 
-  cval_del(out);
-  cval_del(arg);
+  cval_del(cur);
+  cval_del(args);
 
-  return cval_num(1);
+  return cval_num(out);
 }
 
 cval* builtin_lt(cenv* env, cval* arg) {

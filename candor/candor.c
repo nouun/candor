@@ -65,7 +65,7 @@ cval* candor_load(const char* filename, const char* str) {
   if (mpc_parse(filename, str, candor_parser, &res)) {
     cval* val = cval_read(res.output);
 
-    cval* out;
+    cval* out = cval_sexpr();
     while (val->sexpr->count) {
       out = cval_eval(candor_env, cval_pop(val, 0));
 

@@ -39,26 +39,19 @@ cenv* cenv_copy(cenv* env) {
   return e;
 }
 
-cval* cenv_get(const cenv* env, cval* key) {
+cval* cenv_get(const cenv* env, const char* key) {
   for (int i = 0; i < env->count; i++) {
-    if (strcmp(env->keys[i], key->kywd) == 0) {
-      return cval_copy(env->vals[i]);
-    }
+    if (strcmp(env->keys[i], key) == 0) { return cval_copy(env->vals[i]); }
   }
 
   if (env->par) { return cenv_get(env->par, key); }
 
-  return cval_err("unbound keyword '%s'", key->kywd);
+  return cval_err("unbound keyword '%s'", key);
 }
 
-void cenv_def(cenv* env, cval* key, cval* val) {
-  while (env->par) { env = env->par; }
-  cenv_put(env, key, val);
-}
-
-void cenv_put(cenv* env, cval* key, cval* val) {
+void cenv_put(cenv* env, char* key, cval* val) {
   for (int i = 0; i < env->count; i++) {
-    if (strcmp(env->keys[i], key->kywd) == 0) {
+    if (strcmp(env->keys[i], key) == 0) {
       cval_del(env->vals[i]);
       env->vals[i] = val;
       return;
@@ -68,11 +61,16 @@ void cenv_put(cenv* env, cval* key, cval* val) {
   env->count++;
   while (env->count >= env->capacity) {
     env->capacity += CENV_SIZE_INCR;
-    
+
     env->vals = realloc(env->vals, sizeof(cval*) * env->capacity);
     env->keys = realloc(env->keys, sizeof(char*) * env->capacity);
   }
 
+  env->keys[env->count - 1] = key;
   env->vals[env->count - 1] = val;
-  env->keys[env->count - 1] = strdup(key->kywd);
+}
+
+void cenv_def(cenv* env, char* key, cval* val) {
+  while (env->par) { env = env->par; }
+  cenv_put(env, key, val);
 }

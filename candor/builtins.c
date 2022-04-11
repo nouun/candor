@@ -1,7 +1,7 @@
 #include "builtins.h"
 
-#include "config.h"
 #include "builtins/stdlib.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,17 +14,16 @@
     return cval_sexpr();                                                       \
   }
 
-cval* builtin_import(cenv* env, cval* arg) {
-  CASSERT_COUNT(arg, "import", 1);
-  cval* val = cval_take(arg, 0);
-  CASSERT_TYPE2(arg, "import", val, CVAL_STR, CVAL_KYWD);
+cval* builtin_import(cenv* env, cval* args) {
+  CASSERT_COUNT("import", 1);
+  CASSERT_TYPE2("import", 0, CVAL_STR, CVAL_KYWD);
 
+  cval* val = cval_take(args, 0);
   char* orig_name;
-  if (val->type == CVAL_KYWD) {
-    orig_name = val->kywd;
-  } else {
+
+  if (val->type == CVAL_KYWD) orig_name = val->kywd;
+  else
     orig_name = val->str;
-  }
 
   IMPORT_BUILTIN_STDLIB("proc", cenv_add_stdlib_proc, env)
 
@@ -39,11 +38,11 @@ cval* builtin_import(cenv* env, cval* arg) {
   return cval_load_file(env, name);
 }
 
-cval* builtin_load(cenv* env, cval* arg) {
-  CASSERT_COUNT(arg, "load", 1);
-  cval* val = cval_take(arg, 0);
-  CASSERT_TYPE2(arg, "load", val, CVAL_STR, CVAL_KYWD);
+cval* builtin_load(cenv* env, cval* args) {
+  CASSERT_COUNT("load", 1);
+  CASSERT_TYPE2("load", 0, CVAL_STR, CVAL_KYWD);
 
+  cval* val = cval_take(args, 0);
   char* name;
   if (val->type == CVAL_KYWD) {
     name = malloc(strlen(val->kywd) + 1);
@@ -52,10 +51,11 @@ cval* builtin_load(cenv* env, cval* arg) {
     name = malloc(strlen(val->str) + 1);
     strcpy(name, val->str);
   }
+
   cval_del(val);
 
   size_t len = strlen(name);
-  if ((5 > len) || strncmp(name + len - 5, ".cndr", 5) != 0) {
+  if (5 > len || strncmp(name + len - 5, ".cndr", 5) != 0) {
     char* bak = malloc(len + 1);
     strcpy(bak, name);
     free(name);
@@ -69,58 +69,53 @@ cval* builtin_load(cenv* env, cval* arg) {
   return cval_load_file(env, name);
 }
 
-cval* builtin_dump(cenv* env, cval* arg) {
+cval* builtin_dump(cenv* env, cval* args) {
+  CASSERT_COUNT("dump", 0);
+
   printf("Dumping environment:\n");
   for (int i = 0; i < env->count; i++) {
     printf("%s: ", env->keys[i]);
     cval_println(env->vals[i]);
   }
 
-  cval_del(arg);
+  cval_del(args);
   return cval_sexpr();
 }
 
-cval* builtin_exit(cenv* env, cval* arg) {
-  CASSERT(arg, "exit", 0, 1);
+cval* builtin_exit(cenv* env, cval* args) {
+  CASSERT_RANGE("exit", 0, 1);
 
   long status = 0;
 
-  if (arg->sexpr->count == 1) {
-    CASSERT_TYPE(arg, "exit", arg->sexpr->cell[0], CVAL_NUM);
+  if (args->sexpr->count == 1) {
+    CASSERT_TYPE("exit", 0, CVAL_NUM);
 
-    status = arg->sexpr->cell[0]->num;
+    status = args->sexpr->cell[0]->num;
   }
 
-  cval_del(arg);
+  cval_del(args);
   exit(status);
 }
 
-cval* builtin_eval(cenv* env, cval* arg) {
-  if (arg->sexpr->count == 0) {
-    cval_del(arg);
+cval* builtin_eval(cenv* env, cval* args) {
+  CASSERT_COUNT("eval", 0);
+
+  cval* body = cval_take(args, 0);
+  return cval_eval(env, body);
+}
+
+cval* builtin_do(cenv* env, cval* args) {
+  if (args->sexpr->count == 0) {
+    cval_del(args);
     return cval_sexpr();
   }
 
-  cval* out = cval_eval(env, cval_copy(arg->sexpr->cell[0]));
-  cval_del(arg);
-  return out;
+  return cval_take(args, args->sexpr->count - 1);
 }
 
-cval* builtin_do(cenv* env, cval* arg) {
-  if (arg->sexpr->count == 0) {
-    cval_del(arg);
-    return cval_sexpr();
-  }
-
-  cval* out = cval_copy(arg->sexpr->cell[arg->sexpr->count - 1]);
-  cval_del(arg);
-
-  return out;
-}
-
-cval* builtin_def(cenv* env, cval* arg, bool local) {
-  CASSERT_RANGE(arg, "def", 1, 2);
-  CASSERT_TYPE(arg, "def", arg->sexpr->cell[0], CVAL_KYWD);
+cval* builtin_def(cenv* env, cval* args, bool local) {
+  CASSERT_RANGE("def", 1, 2);
+  CASSERT_TYPE("def", 0, CVAL_KYWD);
 
   // TODO: Implement docs
   /* if (arg->count == 3) { */
@@ -131,21 +126,18 @@ cval* builtin_def(cenv* env, cval* arg, bool local) {
   /*   CASSERT(arg, arg->cell[ 1 ]->type == CVAL_STRING, msg); */
   /* } */
 
-  cval* val = cval_eval(env, cval_pop(arg, arg->sexpr->count == 2 ? 1 : 2));
+  cval* val = cval_eval(env, cval_pop(args, args->sexpr->count == 2 ? 1 : 2));
   if (val->type == CVAL_ERR) {
-    cval_del(arg);
+    cval_del(args);
     return val;
   }
 
-  cval* kywd = cval_pop(arg, 0);
+  cval* kywd = cval_take(args, 0);
+  if (local) cenv_put(env, kywd->kywd, val);
+  else
+    cenv_def(env, kywd->kywd, val);
 
-  if (local) {
-    cenv_put(env, kywd, val);
-  } else {
-    cenv_def(env, kywd, val);
-  }
-
-  cval_del(arg);
+  free(kywd);
 
   return cval_sexpr();
 }
@@ -158,19 +150,27 @@ cval* builtin_def_global(cenv* env, cval* arg) {
   return builtin_def(env, arg, false);
 }
 
+cval* builtin_lambda(cenv* env, cval* args) {
+  CASSERT_COUNT("lambda", 2);
+  CASSERT_TYPE("lambda", 0, CVAL_SEXPR);
 
-cval* builtin_lambda(cenv* env, cval* arg) {
-  CASSERT_COUNT(arg, "lambda", 2);
-  CASSERT_TYPE(arg, "lambda", arg->sexpr->cell[0], CVAL_SEXPR);
+  cval* params = args->sexpr->cell[0];
+  cval* body   = args->sexpr->cell[1];
 
-  return cval_fun(arg->sexpr->cell[0], arg->sexpr->cell[1]);
+  // Free without freeing cells to avoid copying body
+  free(args->sexpr->cell);
+  free(args->sexpr);
+  free(args);
+
+  return cval_fun(params, body);
 }
 
-cval* builtin_defun(cenv* env, cval* arg, bool local) {
-  CASSERT_RANGE(arg, "defun", 2, 3);
-  CASSERT_TYPE2(arg, "defun", arg->sexpr->cell[0], CVAL_KYWD, CVAL_SEXPR);
+cval* builtin_define(cenv* env, cval* args, char* str, bool local, bool macro) {
+  CASSERT_RANGE("defun", 2, 3);
+  CASSERT_TYPE2("defun", 0, CVAL_KYWD, CVAL_SEXPR);
 
-  cval* def = cval_pop(arg, 0);
+  cval* def = cval_pop(args, 0);
+
   cval* key;
   cval* params;
   if (def->type == CVAL_KYWD) {
@@ -183,101 +183,80 @@ cval* builtin_defun(cenv* env, cval* arg, bool local) {
   }
 
   cval* fun;
-  if (arg->sexpr->count == 1) {
-    fun = cval_copy(arg->sexpr->cell[0]);
+  if (args->sexpr->count == 1) {
+    fun = cval_take(args, 0);
   } else {
-    fun = cval_copy(arg->sexpr->cell[1]);
+    cval* docstr = cval_pop(args, 0);
+    fun = cval_take(args, 0);
+
+    // TODO: Docs
+    free(docstr);
   }
 
   cval* lambda = cval_fun(params, fun);
+  if (macro) {
+    lambda->type = CVAL_MCR;
+  }
 
   if (local) {
-    cenv_put(env, key, lambda);
+    cenv_put(env, key->str, lambda);
   } else {
-    cenv_def(env, key, lambda);
+    cenv_def(env, key->str, lambda);
   }
-  cval_del(key);
-  cval_del(arg);
+
+  free(key);
 
   return cval_sexpr();
 }
 
-cval* builtin_defun_local(cenv* env, cval* arg) {
-  return builtin_defun(env, arg, true);
+cval* builtin_defproc_local(cenv* env, cval* args) {
+  return builtin_define(env, args, "defproc", true, false);
 }
 
-cval* builtin_defun_global(cenv* env, cval* arg) {
-  return builtin_defun(env, arg, false);
+cval* builtin_defproc_global(cenv* env, cval* args) {
+  return builtin_define(env, args, "defproc!", false, false);
 }
 
-cval* builtin_defmacro(cenv* env, cval* arg) {
-  CASSERT_RANGE(arg, "defmcr", 2, 3);
-  CASSERT_TYPE2(arg, "defmcr", arg->sexpr->cell[0], CVAL_KYWD, CVAL_SEXPR);
-
-  cval* def = cval_pop(arg, 0);
-  cval* key;
-  cval* params;
-  if (def->type == CVAL_KYWD) {
-    key    = def;
-    params = cval_sexpr();
-  } else {
-    key    = cval_pop(def, 0);
-    params = cval_copy(def);
-    cval_del(def);
-  }
-
-  cval* fun;
-  if (arg->sexpr->count == 1) {
-    fun = cval_copy(arg->sexpr->cell[0]);
-
-  } else {
-    fun = cval_copy(arg->sexpr->cell[1]);
-  }
-
-  cval* lambda = cval_fun(params, fun);
-
-  cenv_def(env, key, lambda);
-  cval_del(lambda);
-  cval_del(key);
-  cval_del(arg);
-
-  return cval_sexpr();
+cval* builtin_defmacro_local(cenv* env, cval* args) {
+  return builtin_define(env, args, "defmacro", true, true);
 }
 
-cval* builtin_let(cenv* env, cval* arg) {
-  CASSERT_COUNT(arg, "let", 2);
-  CASSERT_TYPE(arg, "let", arg->sexpr->cell[0], CVAL_SEXPR);
+cval* builtin_defmacro_global(cenv* env, cval* args) {
+  return builtin_define(env, args, "defmacro!", false, true);
+}
+
+cval* builtin_let(cenv* env, cval* args) {
+  CASSERT_COUNT("let", 2);
+  CASSERT_TYPE("let", 0, CVAL_SEXPR);
 
   cenv* scope = cenv_new();
   scope->par  = env;
 
-  cval* lets = cval_pop(arg, 0);
+  cval* lets = cval_pop(args, 0);
   while (lets->sexpr->count) {
     cval* let = cval_pop(lets, 0);
 
     cval* kywd  = cval_pop(let, 0);
     cval* value = cval_eval(scope, cval_pop(let, 0));
 
-    cenv_put(scope, kywd, value);
+    cenv_put(scope, kywd->kywd, value);
 
     cval_del(let);
-    cval_del(kywd);
+    free(kywd);
   }
   cval_del(lets);
 
-  cval* out = cval_eval(scope, cval_pop(arg, 0));
-
+  cval* out = cval_eval(scope, cval_take(args, 0));
   cenv_del(scope);
-  cval_del(arg);
 
   return out;
 }
 
-cval* builtin_len(cenv* env, cval* arg) {
-  CASSERT_COUNT(arg, "len", 1);
-  cval* val = cval_take(arg, 0);
-  CASSERT_TYPE3(val, "len", val, CVAL_STR, CVAL_SEXPR, CVAL_KYWD);
+cval* builtin_len(cenv* env, cval* args) {
+  CASSERT_COUNT("len", 1);
+  CASSERT_TYPE3("len", 0, CVAL_STR, CVAL_SEXPR, CVAL_KYWD);
 
+  cval* val = cval_take(args, 0);
   int out;
   switch (val->type) {
   case CVAL_STR: out = strlen(val->str); break;
@@ -290,18 +269,19 @@ cval* builtin_len(cenv* env, cval* arg) {
   return res;
 }
 
-cval* builtin_print(cenv* env, cval* arg) {
-  for (int i = 0; i < arg->sexpr->count; i++) {
-    if (arg->sexpr->cell[i]->type == CVAL_STR) {
-      printf("%s", arg->sexpr->cell[i]->str);
+cval* builtin_print(cenv* env, cval* args) {
+  while(args->sexpr->count) {
+    cval* val = cval_pop(args, 0);
+    if(val->type == CVAL_STR) {
+      printf("%s", val->str);
     } else {
-      cval_print(arg->sexpr->cell[i]);
+      cval_print(val);
     }
 
-    if (i != arg->sexpr->count - 1) { putchar(' '); }
+    cval_del(val);
   }
-
-  cval_del(arg);
+  
+  cval_del(args);
   return cval_sexpr();
 }
 
@@ -311,41 +291,27 @@ cval* builtin_println(cenv* env, cval* arg) {
   return out;
 }
 
-cval* builtin_typeof(cenv* env, cval* arg) {
-  CASSERT_COUNT(arg, "typeof", 1);
-  int type = arg->sexpr->cell[0]->type;
-  cval_del(arg);
+cval* builtin_typeof(cenv* env, cval* args) {
+  CASSERT_COUNT("typeof", 1);
+
+  cval* val = cval_take(args, 0);
 
   // Hijack cval_err to use formatting
-  cval* res = cval_err("<%s>", cval_type_str[type]);
+  cval* res = cval_err("<%s>", cval_type_str[val->type]);
   res->type = CVAL_STR;
-  return res;
-}
 
-void cenv_add_builtin_str(cenv* env, char* name, char* str) {
-  cval* vals = candor_load(name, str);
-  while (vals->sexpr->count) {
-    cval* val = cval_pop(vals, 0);
-    cval* res = cval_eval(env, val);
-    if (res->type == CVAL_ERR) { cval_println(res); }
-    cval_del(res);
-    cval_del(val);
-  }
-  cval_del(vals);
+  cval_del(val);
+  return res;
 }
 
 void cenv_add_builtin_macro(cenv* env, char* name, cbuiltin func) {
   cval* val = cval_bmcr(func);
-  cval* key = cval_kywd(name);
-  cenv_put(env, key, val);
-  cval_del(key);
+  cenv_put(env, name, val);
 }
 
 void cenv_add_builtin(cenv* env, char* name, cbuiltin func) {
   cval* val = cval_bfun(func);
-  cval* key = cval_kywd(name);
-  cenv_put(env, key, val);
-  cval_del(key);
+  cenv_put(env, name, val);
 }
 
 void cenv_add_builtins(cenv* env) {
@@ -357,12 +323,13 @@ void cenv_add_builtins(cenv* env) {
 
   cenv_add_builtin(env, "len", builtin_len);
   cenv_add_builtin_macro(env, "let", builtin_let);
-
+  
   cenv_add_builtin_macro(env, "def", builtin_def_local);
   cenv_add_builtin_macro(env, "def!", builtin_def_global);
-  cenv_add_builtin_macro(env, "defun", builtin_defun_local);
-  cenv_add_builtin_macro(env, "defun!", builtin_defun_global);
-  cenv_add_builtin_macro(env, "defmcr", builtin_defmacro);
+  cenv_add_builtin_macro(env, "defproc", builtin_defproc_local);
+  cenv_add_builtin_macro(env, "defproc!", builtin_defproc_global);
+  cenv_add_builtin_macro(env, "defmcr", builtin_defmacro_local);
+  cenv_add_builtin_macro(env, "defmcr!", builtin_defmacro_global);
   cenv_add_builtin_macro(env, "lambda", builtin_lambda);
 
   cenv_add_builtin(env, "eval", builtin_eval);

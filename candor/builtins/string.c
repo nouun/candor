@@ -5,13 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-cval* builtin_str_split(cenv* env, cval* arg) {
-  CASSERT_COUNT(arg, "str-split", 2);
-  cval* str = cval_pop(arg, 0);
-  cval* dlm = cval_pop(arg, 0);
-  CASSERT_TYPE(arg, "str-split", str, CVAL_STR);
-  CASSERT_TYPE(arg, "str-split", dlm, CVAL_STR);
+cval* builtin_str_split(cenv* env, cval* args) {
+  CASSERT_COUNT("str/split", 2);
+  CASSERT_TYPE("str/split", 0, CVAL_STR);
+  CASSERT_TYPE("str/split", 1, CVAL_STR);
 
+  cval* str = cval_pop(args, 0);
+  cval* dlm = cval_take(args, 0);
   cval* out = cval_sexpr();
 
   char* ptr = strtok(str->str, dlm->str);
@@ -21,20 +21,17 @@ cval* builtin_str_split(cenv* env, cval* arg) {
   }
 
   free(ptr);
-  cval_del(arg);
   cval_del(str);
   cval_del(dlm);
 
   return out;
 }
 
-cval* builtin_str_to_num(cenv* env, cval* arg) {
-  CASSERT_COUNT(arg, "str->num", 1);
-  cval* val = cval_take(arg, 0);
-  if(val->type == CVAL_KYWD) {
-    printf("%s\n", val->kywd);
-  }
-  CASSERT_TYPE(arg, "str->num", val, CVAL_STR);
+cval* builtin_str_to_num(cenv* env, cval* args) {
+  CASSERT_COUNT("str->num", 1);
+  CASSERT_TYPE("str->num", 0, CVAL_STR);
+
+  cval* val = cval_take(args, 0);
 
   char* end;
   long  value = strtol(val->str, &end, 10);
@@ -51,6 +48,6 @@ cval* builtin_str_to_num(cenv* env, cval* arg) {
 }
 
 void cenv_add_builtins_string(cenv* env) {
-  cenv_add_builtin(env, "str-split", builtin_str_split);
+  cenv_add_builtin(env, "str/split", builtin_str_split);
   cenv_add_builtin(env, "str->num", builtin_str_to_num);
 }

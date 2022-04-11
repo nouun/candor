@@ -2,11 +2,11 @@
 
 #include <stdlib.h>
 
-cval* stdlib_env_get(cenv* env, cval* arg) {
-  CASSERT_COUNT(arg, "env/get", 1);
-  cval* key = cval_take(arg, 0);
-  CASSERT_TYPE(arg, "env/get", key, CVAL_STR);
+cval* stdlib_env_get(cenv* env, cval* args) {
+  CASSERT_COUNT("env/get", 1);
+  CASSERT_TYPE("env/get", 0, CVAL_STR);
 
+  cval* key = cval_take(args, 0);
   char* var = getenv(key->str);
   cval_del(key);
 
@@ -18,12 +18,13 @@ cval* stdlib_env_get(cenv* env, cval* arg) {
   return cval_str(var);
 }
 
-cval* stdlib_env_set(cenv* env, cval* arg) {
-  CASSERT_COUNT(arg, "env/set", 2);
-  cval* key = cval_pop(arg, 0);
-  cval* val = cval_take(arg, 0);
-  CASSERT_TYPE(arg, "env/set", key, CVAL_STR);
-  CASSERT_TYPE(arg, "env/set", val, CVAL_STR);
+cval* stdlib_env_set(cenv* env, cval* args) {
+  CASSERT_COUNT("env/set", 2);
+  CASSERT_TYPE("env/set", 0, CVAL_STR);
+  CASSERT_TYPE("env/set", 1, CVAL_STR);
+
+  cval* key = cval_pop(args, 0);
+  cval* val = cval_take(args, 0);
 
   cval* out = cval_num(setenv(key->str, val->str, 1));
   cval_del(key);
@@ -31,11 +32,11 @@ cval* stdlib_env_set(cenv* env, cval* arg) {
   return out;
 }
 
-cval* stdlib_env_unset(cenv* env, cval* arg) {
-  CASSERT_COUNT(arg, "env/unset", 1);
-  cval* key = cval_take(arg, 0);
-  CASSERT_TYPE(arg, "env/unset", key, CVAL_STR);
+cval* stdlib_env_unset(cenv* env, cval* args) {
+  CASSERT_COUNT("env/unset", 1);
+  CASSERT_TYPE("env/unset", 0, CVAL_STR);
 
+  cval* key = cval_take(args, 0);
   cval* out = cval_num(unsetenv(key->str));
   cval_del(key);
   return out;
