@@ -80,7 +80,10 @@ candor_dep = declare_dependency(
 
 executable(
   'candor',
-  'src/main.c',
+  [
+    'src/main.c',
+    'src/repl.c',
+  ],
   include_directories: incdirs,
   dependencies: [
     candor_dep,
