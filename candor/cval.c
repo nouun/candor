@@ -52,7 +52,7 @@ cval* cval_sexpr(void) {
   v->sexpr           = malloc(sizeof(sexpr));
   v->sexpr->capacity = 4;
   v->sexpr->count    = 0;
-  v->sexpr->cell     = malloc(sizeof(char*) * v->sexpr->capacity);
+  v->sexpr->cell     = malloc(sizeof(cval*) * v->sexpr->capacity);
   return v;
 }
 
@@ -173,9 +173,8 @@ void cval_print_expr(cval* val, char open, char close) {
 }
 
 void cval_str_print(cval* val) {
-  char* esc = malloc(strlen(val->str) + 1);
-  strcpy(esc, val->str);
-  esc = mpcf_escape(esc);
+  char* esc = strdup(val->str);
+  esc       = mpcf_escape(esc);
   printf("\"%s\"", esc);
   free(esc);
 }
@@ -297,10 +296,10 @@ cval* cval_call(cenv* env, cval* fun, cval* args) {
   while (func->params->sexpr->count) {
     cval* key = cval_pop(func->params, 0);
     cval* val;
-    
-    if (args->sexpr->count) val = cval_sexpr();
+
+    if (args->sexpr->count) val = cval_pop(args, 0);
     else
-      val = cval_pop(args, 0);
+      val = cval_sexpr();
 
     cenv_put(func->env, key->kywd, val);
     free(key);
@@ -309,10 +308,13 @@ cval* cval_call(cenv* env, cval* fun, cval* args) {
   cval_del(args);
 
   func->env->par = env;
-  cval* res = cval_eval(func->env, fun->function->body);
+  cval* res      = cval_eval(func->env, fun->function->body);
 
-  cval_del(fun);
-  
+  // Body already freed in cval_eval above
+  cval_del(func->params);
+  cenv_del(func->env);
+  free(func);
+
   return res;
 }
 

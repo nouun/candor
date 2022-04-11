@@ -6,6 +6,7 @@
 #include <string.h>
 
 cval* builtin_str_split(cenv* env, cval* args) {
+  (void)env;
   CASSERT_COUNT("str/split", 2);
   CASSERT_TYPE("str/split", 0, CVAL_STR);
   CASSERT_TYPE("str/split", 1, CVAL_STR);
@@ -28,6 +29,7 @@ cval* builtin_str_split(cenv* env, cval* args) {
 }
 
 cval* builtin_str_to_num(cenv* env, cval* args) {
+  (void)env;
   CASSERT_COUNT("str->num", 1);
   CASSERT_TYPE("str->num", 0, CVAL_STR);
 

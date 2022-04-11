@@ -28,7 +28,7 @@ typedef struct {
   struct cval** cell;
 } sexpr;
 
-typedef struct cval {
+struct cval {
   int type;
 
   union {
@@ -41,8 +41,7 @@ typedef struct cval {
     struct cval*   quot;
     sexpr*         sexpr;
   };
-
-} cval;
+};
 
 typedef enum {
   CVAL_NUM,

@@ -35,7 +35,9 @@ cval* builtin_import(cenv* env, cval* args) {
 
   cval_del(val);
 
-  return cval_load_file(env, name);
+  cval* out = cval_load_file(env, name);
+  free(name);
+  return out;
 }
 
 cval* builtin_load(cenv* env, cval* args) {
@@ -45,28 +47,27 @@ cval* builtin_load(cenv* env, cval* args) {
   cval* val = cval_take(args, 0);
   char* name;
   if (val->type == CVAL_KYWD) {
-    name = malloc(strlen(val->kywd) + 1);
-    strcpy(name, val->kywd);
+    name = val->kywd;
   } else {
-    name = malloc(strlen(val->str) + 1);
-    strcpy(name, val->str);
+    name = val->str;
   }
-
-  cval_del(val);
+  free(val);
 
   size_t len = strlen(name);
   if (5 > len || strncmp(name + len - 5, ".cndr", 5) != 0) {
-    char* bak = malloc(len + 1);
-    strcpy(bak, name);
+    char* bak = strdup(name);
     free(name);
 
     name = malloc(len + 6);
-    sprintf(name, "%s.cndr", bak);
+    // TODO: Test if correct len
+    snprintf(name, len + 6, "%s.cndr", bak);
 
     free(bak);
   }
 
-  return cval_load_file(env, name);
+  cval* out = cval_load_file(env, name);
+  free(name);
+  return out;
 }
 
 cval* builtin_dump(cenv* env, cval* args) {
@@ -83,6 +84,7 @@ cval* builtin_dump(cenv* env, cval* args) {
 }
 
 cval* builtin_exit(cenv* env, cval* args) {
+  (void)env;
   CASSERT_RANGE("exit", 0, 1);
 
   long status = 0;
@@ -105,6 +107,7 @@ cval* builtin_eval(cenv* env, cval* args) {
 }
 
 cval* builtin_do(cenv* env, cval* args) {
+  (void)env;
   if (args->sexpr->count == 0) {
     cval_del(args);
     return cval_sexpr();
@@ -151,6 +154,7 @@ cval* builtin_def_global(cenv* env, cval* arg) {
 }
 
 cval* builtin_lambda(cenv* env, cval* args) {
+  (void)env;
   CASSERT_COUNT("lambda", 2);
   CASSERT_TYPE("lambda", 0, CVAL_SEXPR);
 
@@ -165,9 +169,9 @@ cval* builtin_lambda(cenv* env, cval* args) {
   return cval_fun(params, body);
 }
 
-cval* builtin_define(cenv* env, cval* args, char* str, bool local, bool macro) {
-  CASSERT_RANGE("defun", 2, 3);
-  CASSERT_TYPE2("defun", 0, CVAL_KYWD, CVAL_SEXPR);
+cval* builtin_define(cenv* env, cval* args, char* name, bool local, bool macro) {
+  CASSERT_RANGE(name, 2, 3);
+  CASSERT_TYPE2(name, 0, CVAL_KYWD, CVAL_SEXPR);
 
   cval* def = cval_pop(args, 0);
 
@@ -253,6 +257,7 @@ cval* builtin_let(cenv* env, cval* args) {
 }
 
 cval* builtin_len(cenv* env, cval* args) {
+  (void)env;
   CASSERT_COUNT("len", 1);
   CASSERT_TYPE3("len", 0, CVAL_STR, CVAL_SEXPR, CVAL_KYWD);
 
@@ -262,6 +267,7 @@ cval* builtin_len(cenv* env, cval* args) {
   case CVAL_STR: out = strlen(val->str); break;
   case CVAL_KYWD: out = strlen(val->kywd); break;
   case CVAL_SEXPR: out = val->sexpr->count; break;
+  default: out = 0;
   }
 
   cval* res = cval_num(out);
@@ -270,6 +276,7 @@ cval* builtin_len(cenv* env, cval* args) {
 }
 
 cval* builtin_print(cenv* env, cval* args) {
+  (void)env;
   while(args->sexpr->count) {
     cval* val = cval_pop(args, 0);
     if(val->type == CVAL_STR) {
@@ -292,6 +299,7 @@ cval* builtin_println(cenv* env, cval* arg) {
 }
 
 cval* builtin_typeof(cenv* env, cval* args) {
+  (void)env;
   CASSERT_COUNT("typeof", 1);
 
   cval* val = cval_take(args, 0);
@@ -306,12 +314,14 @@ cval* builtin_typeof(cenv* env, cval* args) {
 
 void cenv_add_builtin_macro(cenv* env, char* name, cbuiltin func) {
   cval* val = cval_bmcr(func);
-  cenv_put(env, name, val);
+  // Duplicate the name so that we can free it with the
+  // rest of the environment keys at deinit
+  cenv_put(env, strdup(name), val);
 }
 
 void cenv_add_builtin(cenv* env, char* name, cbuiltin func) {
   cval* val = cval_bfun(func);
-  cenv_put(env, name, val);
+  cenv_put(env, strdup(name), val);
 }
 
 void cenv_add_builtins(cenv* env) {

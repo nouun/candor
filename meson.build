@@ -7,6 +7,14 @@ project(
   ],
 )
 
+add_project_arguments(
+  [
+    '-DWLR_USE_UNSTABLE',
+    '-D_POSIX_C_SOURCE=200809L',
+  ],
+  language: 'c',
+)
+
 
 stdlib = get_option('stdlib')
 if stdlib == ''

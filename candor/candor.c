@@ -67,6 +67,7 @@ cval* candor_load(const char* filename, const char* str) {
 
     cval* out = cval_sexpr();
     while (val->sexpr->count) {
+      cval_del(out);
       out = cval_eval(candor_env, cval_pop(val, 0));
 
       if (out->type == CVAL_ERR) {
@@ -74,8 +75,6 @@ cval* candor_load(const char* filename, const char* str) {
         cval_del(val);
         return out;
       }
-
-      if (val->sexpr->count != 0) { cval_del(out); }
     }
 
     cval_del(val);

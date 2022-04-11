@@ -2,7 +2,9 @@
 
 #include <stdlib.h>
 
+
 cval* stdlib_env_get(cenv* env, cval* args) {
+  (void)env;
   CASSERT_COUNT("env/get", 1);
   CASSERT_TYPE("env/get", 0, CVAL_STR);
 
@@ -19,6 +21,7 @@ cval* stdlib_env_get(cenv* env, cval* args) {
 }
 
 cval* stdlib_env_set(cenv* env, cval* args) {
+  (void)env;
   CASSERT_COUNT("env/set", 2);
   CASSERT_TYPE("env/set", 0, CVAL_STR);
   CASSERT_TYPE("env/set", 1, CVAL_STR);
@@ -33,6 +36,7 @@ cval* stdlib_env_set(cenv* env, cval* args) {
 }
 
 cval* stdlib_env_unset(cenv* env, cval* args) {
+  (void)env;
   CASSERT_COUNT("env/unset", 1);
   CASSERT_TYPE("env/unset", 0, CVAL_STR);
 

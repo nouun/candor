@@ -32,8 +32,7 @@ cenv* cenv_copy(cenv* env) {
   e->keys     = malloc(sizeof(char*) * env->capacity);
   e->vals     = malloc(sizeof(cval*) * env->capacity);
   for (int i = 0; i < env->count; i++) {
-    e->keys[i] = malloc(strlen(env->keys[i]) + 1);
-    strcpy(e->keys[i], env->keys[i]);
+    e->keys[i] = strdup(env->keys[i]);
     e->vals[i] = cval_copy(env->vals[i]);
   }
   return e;

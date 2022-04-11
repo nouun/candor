@@ -4,6 +4,7 @@
 
 #include <errno.h>
 #include <mpc.h>
+#include <stdlib.h>
 
 static cval* cval_read_num(mpc_ast_t* tree) {
   errno    = 0;
@@ -14,9 +15,8 @@ static cval* cval_read_num(mpc_ast_t* tree) {
 static cval* cval_read_str(mpc_ast_t* tree) {
   // Remove trailing "
   tree->contents[strlen(tree->contents) - 1] = '\0';
-  char* unesc = malloc(strlen(tree->contents) + 1);
   // Copy without leading "
-  strcpy(unesc, tree->contents + 1);
+  char* unesc = strdup(tree->contents + 1);
   unesc     = mpcf_unescape(unesc);
   cval* str = cval_str(unesc);
 

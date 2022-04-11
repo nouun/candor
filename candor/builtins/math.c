@@ -4,6 +4,7 @@
 #include <string.h>
 
 cval* builtin_op(cenv* env, char op, cval* args) {
+  (void)env;
   char opstr[2] = { op, '\0' };
   CASSERT_MIN(opstr, 2);
   
