@@ -1,4 +1,11 @@
-project('candor', 'c')
+project(
+  'candor',
+  'c',
+  default_options: [
+    'c_std=c99',
+    'warning_level=2',
+  ],
+)
 
 
 stdlib = get_option('stdlib')
