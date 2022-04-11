@@ -28,5 +28,7 @@ done something better.
   - [-] CLI options [1/2]
     - [X] Running =.cndr= file
     - [ ] Passing string
-  - [X] Loading external files
-  - [ ] Some sort of stdlib which can be imported globally
+  - [-] Loading external files [1/2]
+    - [X] Loading external files
+    - [ ] =load= inside of file should be relative to file rather than working dir
+  - [X] Some sort of stdlib which can be imported globally

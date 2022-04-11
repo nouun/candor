@@ -33,6 +33,8 @@ candor_sources = [
   'candor/builtins/conditional.c',
   'candor/builtins/list.c',
   'candor/builtins/math.c',
+  'candor/builtins/string.c',
+  'candor/builtins/stdlib/proc.c',
 ]
 
 mpc     = dependency('mpc')

@@ -21,7 +21,7 @@ void cenv_del(cenv* env) {
 
   free(env->keys);
   free(env->vals);
-  free((cenv*)env);
+  free(env);
 }
 
 cenv* cenv_copy(cenv* env) {
@@ -60,7 +60,7 @@ void cenv_put(cenv* env, cval* key, cval* val) {
   for (int i = 0; i < env->count; i++) {
     if (strcmp(env->keys[i], key->kywd) == 0) {
       cval_del(env->vals[i]);
-      env->vals[i] = cval_copy(val);
+      env->vals[i] = val;
       return;
     }
   }
@@ -73,6 +73,6 @@ void cenv_put(cenv* env, cval* key, cval* val) {
     env->keys = realloc(env->keys, sizeof(char*) * env->capacity);
   }
 
-  env->vals[env->count - 1] = cval_copy(val);
+  env->vals[env->count - 1] = val;
   env->keys[env->count - 1] = strdup(key->kywd);
 }

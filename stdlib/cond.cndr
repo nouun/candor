@@ -1,0 +1,41 @@
+(import 'list)
+
+(defun (or lhs rhs)
+  "Check if LHS or RHS is true."
+  (+ lhs rhs))
+
+(defun (and lhs rhs)
+  "Check if LHS and RHS are true."
+  (* lhs rhs))
+
+(defun (not val)
+  "Check if VAL is false."
+  (= 0 val))
+
+(defun (< first & args)
+  "Iterate through Aargs, checking if the
+current value is less than the next value."
+  (apply lt?
+    (join (list first) args)))
+
+(defun (> first & rest)
+  "Iterate through args, checking if the
+current value is greater than the next value."
+  (apply gt?
+    (join (list first) args)))
+
+(defun (>= first & rest)
+  "Iterate through args, checking if the
+current value is greater or equal to the
+next value."
+  (or (= 0 (len rest))
+      (not (> first (head rest)))
+      (not (= first (head rest)))
+      (= 1 (len rest))
+      (>= (head rest) (tail rest))))
+
+(defun (<= lhs rhs)
+  "Check if LHS is lesser or equal to RHS"
+  (or (< lhs rhs)
+      (eq? lhs rhs)))
+

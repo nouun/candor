@@ -2,6 +2,7 @@
 
 #include "cval.h"
 
+#include <errno.h>
 #include <mpc.h>
 
 static cval* cval_read_num(mpc_ast_t* tree) {

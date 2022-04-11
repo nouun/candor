@@ -1,10 +1,18 @@
 #include "builtins.h"
 
 #include "config.h"
+#include "builtins/stdlib.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define IMPORT_BUILTIN_STDLIB(libname, func, env)                              \
+  if (strstr(orig_name, libname)) {                                            \
+    func(env);                                                                 \
+    cval_del(val);                                                             \
+    return cval_sexpr();                                                       \
+  }
 
 cval* builtin_import(cenv* env, cval* arg) {
   CASSERT_COUNT(arg, "import", 1);
@@ -17,6 +25,8 @@ cval* builtin_import(cenv* env, cval* arg) {
   } else {
     orig_name = val->str;
   }
+
+  IMPORT_BUILTIN_STDLIB("proc", cenv_add_stdlib_proc, env)
 
   char* stdlib_dir = getenv("CANDOR_STDLIB_DIR");
   if (!stdlib_dir) { stdlib_dir = STDLIB_DIR; }
@@ -96,6 +106,18 @@ cval* builtin_eval(cenv* env, cval* arg) {
   return out;
 }
 
+cval* builtin_do(cenv* env, cval* arg) {
+  if (arg->sexpr->count == 0) {
+    cval_del(arg);
+    return cval_sexpr();
+  }
+
+  cval* out = cval_copy(arg->sexpr->cell[arg->sexpr->count - 1]);
+  cval_del(arg);
+
+  return out;
+}
+
 cval* builtin_def(cenv* env, cval* arg, bool local) {
   CASSERT_RANGE(arg, "def", 1, 2);
   CASSERT_TYPE(arg, "def", arg->sexpr->cell[0], CVAL_KYWD);
@@ -109,17 +131,18 @@ cval* builtin_def(cenv* env, cval* arg, bool local) {
   /*   CASSERT(arg, arg->cell[ 1 ]->type == CVAL_STRING, msg); */
   /* } */
 
-  cval* val;
-  if (arg->sexpr->count == 2) {
-    val = arg->sexpr->cell[1];
-  } else {
-    val = arg->sexpr->cell[2];
+  cval* val = cval_eval(env, cval_pop(arg, arg->sexpr->count == 2 ? 1 : 2));
+  if (val->type == CVAL_ERR) {
+    cval_del(arg);
+    return val;
   }
 
+  cval* kywd = cval_pop(arg, 0);
+
   if (local) {
-    cenv_put(env, arg->sexpr->cell[0], val);
+    cenv_put(env, kywd, val);
   } else {
-    cenv_def(env, arg->sexpr->cell[0], val);
+    cenv_def(env, kywd, val);
   }
 
   cval_del(arg);
@@ -173,7 +196,6 @@ cval* builtin_defun(cenv* env, cval* arg, bool local) {
   } else {
     cenv_def(env, key, lambda);
   }
-  cval_del(lambda);
   cval_del(key);
   cval_del(arg);
 
@@ -222,6 +244,52 @@ cval* builtin_defmacro(cenv* env, cval* arg) {
   return cval_sexpr();
 }
 
+cval* builtin_let(cenv* env, cval* arg) {
+  CASSERT_COUNT(arg, "let", 2);
+  CASSERT_TYPE(arg, "let", arg->sexpr->cell[0], CVAL_SEXPR);
+
+  cenv* scope = cenv_new();
+  scope->par  = env;
+
+  cval* lets = cval_pop(arg, 0);
+  while (lets->sexpr->count) {
+    cval* let = cval_pop(lets, 0);
+
+    cval* kywd  = cval_pop(let, 0);
+    cval* value = cval_eval(scope, cval_pop(let, 0));
+
+    cenv_put(scope, kywd, value);
+
+    cval_del(let);
+    cval_del(kywd);
+  }
+  cval_del(lets);
+
+  cval* out = cval_eval(scope, cval_pop(arg, 0));
+
+  cenv_del(scope);
+  cval_del(arg);
+
+  return out;
+}
+
+cval* builtin_len(cenv* env, cval* arg) {
+  CASSERT_COUNT(arg, "len", 1);
+  cval* val = cval_take(arg, 0);
+  CASSERT_TYPE3(val, "len", val, CVAL_STR, CVAL_SEXPR, CVAL_KYWD);
+
+  int out;
+  switch (val->type) {
+  case CVAL_STR: out = strlen(val->str); break;
+  case CVAL_KYWD: out = strlen(val->kywd); break;
+  case CVAL_SEXPR: out = val->sexpr->count; break;
+  }
+
+  cval* res = cval_num(out);
+  cval_del(val);
+  return res;
+}
+
 cval* builtin_print(cenv* env, cval* arg) {
   for (int i = 0; i < arg->sexpr->count; i++) {
     if (arg->sexpr->cell[i]->type == CVAL_STR) {
@@ -240,18 +308,6 @@ cval* builtin_print(cenv* env, cval* arg) {
 cval* builtin_println(cenv* env, cval* arg) {
   cval* out = builtin_print(env, arg);
   putchar('\n');
-  return out;
-}
-
-cval* builtin_do(cenv* env, cval* arg) {
-  if (arg->sexpr->count == 0) {
-    cval_del(arg);
-    return cval_sexpr();
-  }
-
-  cval* out = cval_copy(arg->sexpr->cell[arg->sexpr->count - 1]);
-  cval_del(arg);
-
   return out;
 }
 
@@ -283,7 +339,6 @@ void cenv_add_builtin_macro(cenv* env, char* name, cbuiltin func) {
   cval* key = cval_kywd(name);
   cenv_put(env, key, val);
   cval_del(key);
-  cval_del(val);
 }
 
 void cenv_add_builtin(cenv* env, char* name, cbuiltin func) {
@@ -291,7 +346,6 @@ void cenv_add_builtin(cenv* env, char* name, cbuiltin func) {
   cval* key = cval_kywd(name);
   cenv_put(env, key, val);
   cval_del(key);
-  cval_del(val);
 }
 
 void cenv_add_builtins(cenv* env) {
@@ -301,11 +355,14 @@ void cenv_add_builtins(cenv* env) {
   cenv_add_builtin(env, "dump", builtin_dump);
   cenv_add_builtin(env, "typeof", builtin_typeof);
 
-  cenv_add_builtin_macro(env, "defmcr", builtin_defmacro);
+  cenv_add_builtin(env, "len", builtin_len);
+  cenv_add_builtin_macro(env, "let", builtin_let);
+
   cenv_add_builtin_macro(env, "def", builtin_def_local);
   cenv_add_builtin_macro(env, "def!", builtin_def_global);
   cenv_add_builtin_macro(env, "defun", builtin_defun_local);
   cenv_add_builtin_macro(env, "defun!", builtin_defun_global);
+  cenv_add_builtin_macro(env, "defmcr", builtin_defmacro);
   cenv_add_builtin_macro(env, "lambda", builtin_lambda);
 
   cenv_add_builtin(env, "eval", builtin_eval);
@@ -316,4 +373,5 @@ void cenv_add_builtins(cenv* env) {
   cenv_add_builtins_conditional(env);
   cenv_add_builtins_list(env);
   cenv_add_builtins_math(env);
+  cenv_add_builtins_string(env);
 }

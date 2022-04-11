@@ -4,7 +4,6 @@
 #include "cenv.h"
 #include "parser.h"
 
-#include <errno.h>
 #include <math.h>
 #include <mpc.h>
 #include <stdarg.h>
@@ -101,18 +100,22 @@ static void user_function_del(user_function* val) {
   cenv_del(val->env);
   cval_del(val->params);
   cval_del(val->body);
+  free(val);
 }
 
 void cval_del(cval* val) {
   switch (val->type) {
-  case CVAL_MCR:
-  case CVAL_FUN: user_function_del(val->function); break;
   case CVAL_NUM: break;
   case CVAL_STR: free(val->str); break;
   case CVAL_KYWD: free(val->kywd); break;
   case CVAL_ERR: free(val->err); break;
+
+  case CVAL_MCR:
+  case CVAL_FUN: user_function_del(val->function); break;
+
   case CVAL_QQUOT:
   case CVAL_QUOT: cval_del(val->quot); break;
+
   case CVAL_SEXPR:
     for (int i = 0; i < val->sexpr->count; i++) {
       cval_del(val->sexpr->cell[i]);
@@ -284,6 +287,7 @@ cval* cval_call(cenv* env, cval* fun, cval* args) {
     cval* err
       = cval_err("Expected %li args, got %li",
                  fun->function->params->sexpr->count, args->sexpr->count);
+    cval_del(args);
     return err;
   }
 
@@ -293,9 +297,11 @@ cval* cval_call(cenv* env, cval* fun, cval* args) {
                cval_sexpr());
     } else {
       cenv_put(fun->function->env, fun->function->params->sexpr->cell[i],
-               args->sexpr->cell[i]);
+               cval_copy(args->sexpr->cell[i]));
     }
   }
+
+  cval_del(args);
 
   fun->function->env->par = env;
   cval* res = cval_eval(fun->function->env, cval_copy(fun->function->body));

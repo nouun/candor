@@ -46,7 +46,6 @@ int main(int argc, char** argv) {
   }
   
   printf("candor v%s\n", CANDOR_VERSION);
-  printf("%s\n", STDLIB_DIR);
   
   while (1) {
     char* input = readline("candor > ");

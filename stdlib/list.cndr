@@ -1,0 +1,2 @@
+(defun (apply fn args)
+  (eval (join (list fn) args)))

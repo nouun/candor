@@ -51,8 +51,8 @@ cval* builtin_list(cenv* env, cval* arg) {
 }
 
 void cenv_add_builtins_list(cenv* env) {
-  cenv_add_builtin(env, "list", builtin_list);
-  cenv_add_builtin(env, "join", builtin_join);
-  cenv_add_builtin(env, "head", builtin_head);
   cenv_add_builtin(env, "tail", builtin_tail);
+  cenv_add_builtin(env, "head", builtin_head);
+  cenv_add_builtin(env, "join", builtin_join);
+  cenv_add_builtin(env, "list", builtin_list);
 }
