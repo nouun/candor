@@ -58,11 +58,12 @@ cval* builtin_map(cenv* env, cval* args) {
   CASSERT_COUNT("map", 2);
   CASSERT_TYPE4("map", 0, CVAL_FUN, CVAL_BFUN, CVAL_MCR, CVAL_BMCR);
   CASSERT_TYPE("map", 1, CVAL_SEXPR);
+
   cval* fn  = cval_pop(args, 0);
   cval* lst = cval_take(args, 0);
 
-  for(int i = 0; i < lst->sexpr->count; i++) {
-    cval* args = cval_add(cval_sexpr(), lst->sexpr->cell[i]);
+  for (int i = 0; i < lst->sexpr->count; i++) {
+    cval* args          = cval_add(cval_sexpr(), lst->sexpr->cell[i]);
     lst->sexpr->cell[i] = cval_call(env, cval_copy(fn), args);
   }
 
@@ -80,9 +81,42 @@ cval* builtin_reduce(cenv* env, cval* args) {
 
 cval* builtin_filter(cenv* env, cval* args) {
   (void)env;
-  (void)args;
-  // TODO: Implement filter
-  return cval_err("func(filter): not implemented");
+  CASSERT_COUNT("filter", 2);
+  CASSERT_TYPE4("filter", 0, CVAL_FUN, CVAL_BFUN, CVAL_MCR, CVAL_BMCR);
+  CASSERT_TYPE("filter", 1, CVAL_SEXPR);
+
+  cval* fn  = cval_pop(args, 0);
+  cval* lst = cval_take(args, 0);
+
+  cval* out = cval_sexpr();
+
+  while (lst->sexpr->count) {
+    cval* val = cval_pop(lst, 0);
+    cval* args = cval_add(cval_sexpr(), cval_copy(val));
+    cval* ret  = cval_call(env, cval_copy(fn), args);
+    if (ret->type != CVAL_NUM) {
+      cval* err = cval_err("func(filter): Expected type '%s', got type '%s'",
+                           cval_type_str[CVAL_NUM], cval_type_str[ret->type]);
+      cval_del(fn);
+      cval_del(lst);
+      cval_del(ret);
+      cval_del(args);
+      return err;
+    }
+
+    if(ret->num) {
+      out = cval_add(out, val);
+    } else {
+      cval_del(val);
+    }
+
+    cval_del(ret);
+  }
+
+  cval_del(fn);
+  cval_del(lst);
+
+  return out;
 }
 
 void builtins_add_list(cenv* env) {
