@@ -94,3 +94,7 @@ cval* candor_load(const char* filename, const char* str) {
 cval* candor_load_file(const char* filename) {
   return cval_load_file(candor_env, filename);
 }
+
+void candor_add_builtin(char* name, cbuiltin proc) {
+  builtin_add_fun(candor_env, name, proc);
+}

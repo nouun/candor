@@ -58,11 +58,17 @@ cval* builtin_map(cenv* env, cval* args) {
   CASSERT_COUNT("map", 2);
   CASSERT_TYPE4("map", 0, CVAL_FUN, CVAL_BFUN, CVAL_MCR, CVAL_BMCR);
   CASSERT_TYPE("map", 1, CVAL_SEXPR);
-  /* cval* fn  = cval_pop(args, 0); */
-  /* cval* lst = cval_take(args, 0); */
+  cval* fn  = cval_pop(args, 0);
+  cval* lst = cval_take(args, 0);
 
-  // TODO: Implement map
-  return cval_err("func(map): not implemented");
+  for(int i = 0; i < lst->sexpr->count; i++) {
+    cval* args = cval_add(cval_sexpr(), lst->sexpr->cell[i]);
+    lst->sexpr->cell[i] = cval_call(env, cval_copy(fn), args);
+  }
+
+  cval_del(fn);
+
+  return lst;
 }
 
 cval* builtin_reduce(cenv* env, cval* args) {
@@ -79,13 +85,12 @@ cval* builtin_filter(cenv* env, cval* args) {
   return cval_err("func(filter): not implemented");
 }
 
-void cenv_add_builtins_list(cenv* env) {
-  cenv_add_builtin(env, "tail", builtin_tail);
-  cenv_add_builtin(env, "head", builtin_head);
-  cenv_add_builtin(env, "join", builtin_join);
-  cenv_add_builtin(env, "list", builtin_list);
-
-  cenv_add_builtin(env, "map", builtin_map);
-  cenv_add_builtin(env, "reduce", builtin_reduce);
-  cenv_add_builtin(env, "filter", builtin_filter);
+void builtins_add_list(cenv* env) {
+  builtin_add_fun(env, "tail", builtin_tail);
+  builtin_add_fun(env, "head", builtin_head);
+  builtin_add_fun(env, "join", builtin_join);
+  builtin_add_fun(env, "list", builtin_list);
+  builtin_add_fun(env, "map", builtin_map);
+  builtin_add_fun(env, "reduce", builtin_reduce);
+  builtin_add_fun(env, "filter", builtin_filter);
 }

@@ -5,6 +5,6 @@
 #include "../cenv.h"
 #include "../cval.h"
 
-void cenv_add_stdlib_proc(cenv* env);
+void stdlib_add_proc(cenv* env);
 
 #endif /* CANDOR_STDLIB_H */

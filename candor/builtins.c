@@ -25,7 +25,7 @@ cval* builtin_import(cenv* env, cval* args) {
   else
     orig_name = val->str;
 
-  IMPORT_BUILTIN_STDLIB("proc", cenv_add_stdlib_proc, env)
+  IMPORT_BUILTIN_STDLIB("proc", stdlib_add_proc, env)
 
   char* stdlib_dir = getenv("CANDOR_STDLIB_DIR");
   if (!stdlib_dir) { stdlib_dir = STDLIB_DIR; }
@@ -312,43 +312,43 @@ cval* builtin_typeof(cenv* env, cval* args) {
   return res;
 }
 
-void cenv_add_builtin_macro(cenv* env, char* name, cbuiltin func) {
+void builtin_add_mcr(cenv* env, char* name, cbuiltin func) {
   cval* val = cval_bmcr(func);
   // Duplicate the name so that we can free it with the
   // rest of the environment keys at deinit
   cenv_put(env, strdup(name), val);
 }
 
-void cenv_add_builtin(cenv* env, char* name, cbuiltin func) {
+void builtin_add_fun(cenv* env, char* name, cbuiltin func) {
   cval* val = cval_bfun(func);
   cenv_put(env, strdup(name), val);
 }
 
 void cenv_add_builtins(cenv* env) {
-  cenv_add_builtin(env, "import", builtin_import);
-  cenv_add_builtin(env, "load", builtin_load);
-  cenv_add_builtin(env, "exit", builtin_exit);
-  cenv_add_builtin(env, "dump", builtin_dump);
-  cenv_add_builtin(env, "typeof", builtin_typeof);
+  builtin_add_fun(env, "import", builtin_import);
+  builtin_add_fun(env, "load", builtin_load);
+  builtin_add_fun(env, "exit", builtin_exit);
+  builtin_add_fun(env, "dump", builtin_dump);
+  builtin_add_fun(env, "typeof", builtin_typeof);
 
-  cenv_add_builtin(env, "len", builtin_len);
-  cenv_add_builtin_macro(env, "let", builtin_let);
+  builtin_add_fun(env, "len", builtin_len);
+  builtin_add_mcr(env, "let", builtin_let);
   
-  cenv_add_builtin_macro(env, "def", builtin_def_local);
-  cenv_add_builtin_macro(env, "def!", builtin_def_global);
-  cenv_add_builtin_macro(env, "defproc", builtin_defproc_local);
-  cenv_add_builtin_macro(env, "defproc!", builtin_defproc_global);
-  cenv_add_builtin_macro(env, "defmcr", builtin_defmacro_local);
-  cenv_add_builtin_macro(env, "defmcr!", builtin_defmacro_global);
-  cenv_add_builtin_macro(env, "lambda", builtin_lambda);
+  builtin_add_mcr(env, "def", builtin_def_local);
+  builtin_add_mcr(env, "def!", builtin_def_global);
+  builtin_add_mcr(env, "defproc", builtin_defproc_local);
+  builtin_add_mcr(env, "defproc!", builtin_defproc_global);
+  builtin_add_mcr(env, "defmcr", builtin_defmacro_local);
+  builtin_add_mcr(env, "defmcr!", builtin_defmacro_global);
+  builtin_add_mcr(env, "lambda", builtin_lambda);
 
-  cenv_add_builtin(env, "eval", builtin_eval);
-  cenv_add_builtin(env, "do", builtin_do);
-  cenv_add_builtin(env, "print", builtin_print);
-  cenv_add_builtin(env, "println", builtin_println);
+  builtin_add_fun(env, "eval", builtin_eval);
+  builtin_add_fun(env, "do", builtin_do);
+  builtin_add_fun(env, "print", builtin_print);
+  builtin_add_fun(env, "println", builtin_println);
 
-  cenv_add_builtins_conditional(env);
-  cenv_add_builtins_list(env);
-  cenv_add_builtins_math(env);
-  cenv_add_builtins_string(env);
+  builtins_add_conditional(env);
+  builtins_add_list(env);
+  builtins_add_math(env);
+  builtins_add_string(env);
 }

@@ -57,6 +57,15 @@ typedef enum {
   CVAL_BMCR,
 } CvalType;
 
+static char* cval_type_str[]
+  = { [CVAL_NUM] = "number",        [CVAL_STR] = "string",
+      [CVAL_ERR] = "error",         [CVAL_KYWD] = "keyword",
+      [CVAL_SEXPR] = "sexpr",       [CVAL_QUOT] = "quot",
+      [CVAL_QQUOT] = "quasiquot",   [CVAL_FUN] = "function",
+      [CVAL_BFUN] = "builtin",      [CVAL_MCR] = "macro",
+      [CVAL_BMCR] = "builtin-macro" };
+
+
 void  candor_init(void);
 void  candor_deinit(void);
 cval* candor_load(const char* filename, const char* str);
@@ -68,6 +77,11 @@ void cval_print(cval* val);
 void cval_println(cval* val);
 
 /// Free cval and all assoc values
-void  cval_del(cval* val);
+void cval_del(cval* val);
+
+/* Adding Builtins */
+
+/// Add a new builtin procedure to the global scope
+void candor_add_builtin(char* name, cbuiltin proc);
 
 #endif /* CANDOR_H */

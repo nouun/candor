@@ -115,12 +115,12 @@ cval* builtin_def(cenv* env, cval* args, bool local);
 cval* builtin_load(cenv* env, cval* args);
 void  cenv_add_builtins(cenv* env);
 
-void cenv_add_builtins_conditional(cenv* env);
-void cenv_add_builtins_list(cenv* env);
-void cenv_add_builtins_math(cenv* env);
-void cenv_add_builtins_string(cenv* env);
+void builtins_add_conditional(cenv* env);
+void builtins_add_list(cenv* env);
+void builtins_add_math(cenv* env);
+void builtins_add_string(cenv* env);
 
-void cenv_add_builtin(cenv* env, char* name, cbuiltin func);
-void cenv_add_builtin_macro(cenv* env, char* name, cbuiltin func);
+void builtin_add_fun(cenv* env, char* name, cbuiltin func);
+void builtin_add_mcr(cenv* env, char* name, cbuiltin func);
 
 #endif

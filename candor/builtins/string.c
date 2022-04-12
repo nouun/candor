@@ -49,7 +49,7 @@ cval* builtin_str_to_num(cenv* env, cval* args) {
   return cval_num(value);
 }
 
-void cenv_add_builtins_string(cenv* env) {
-  cenv_add_builtin(env, "str/split", builtin_str_split);
-  cenv_add_builtin(env, "str->num", builtin_str_to_num);
+void builtins_add_string(cenv* env) {
+  builtin_add_fun(env, "str/split", builtin_str_split);
+  builtin_add_fun(env, "str->num", builtin_str_to_num);
 }

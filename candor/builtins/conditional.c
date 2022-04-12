@@ -75,10 +75,10 @@ cval* builtin_gt(cenv* env, cval* arg) {
   return builtin_ord(env, "gt?", arg);
 }
 
-void cenv_add_builtins_conditional(cenv* env) {
-  cenv_add_builtin_macro(env, "if", builtin_if);
-  cenv_add_builtin_macro(env, "eq?", builtin_eq);
-
-  cenv_add_builtin_macro(env, "lt?", builtin_lt);
-  cenv_add_builtin_macro(env, "gt?", builtin_gt);
+void builtins_add_conditional(cenv* env) {
+  builtin_add_mcr(env, "if", builtin_if);
+  builtin_add_mcr(env, "eq?", builtin_eq);
+  
+  builtin_add_mcr(env, "lt?", builtin_lt);
+  builtin_add_mcr(env, "gt?", builtin_gt);
 }

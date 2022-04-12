@@ -314,6 +314,7 @@ cval* cval_call(cenv* env, cval* fun, cval* args) {
   cval_del(func->params);
   cenv_del(func->env);
   free(func);
+  free(fun);
 
   return res;
 }

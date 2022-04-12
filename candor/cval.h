@@ -17,14 +17,6 @@
 
 #define CVAL_SIZE_BASE 4
 
-static char* cval_type_str[]
-  = { [CVAL_NUM] = "number",        [CVAL_STR] = "string",
-      [CVAL_ERR] = "error",         [CVAL_KYWD] = "keyword",
-      [CVAL_SEXPR] = "sexpr",       [CVAL_QUOT] = "quot",
-      [CVAL_QQUOT] = "quasiquot",   [CVAL_FUN] = "function",
-      [CVAL_BFUN] = "builtin",      [CVAL_MCR] = "macro",
-      [CVAL_BMCR] = "builtin-macro" };
-
 /// Copy cval to new cval
 cval* cval_copy(const cval* val);
 /// Free cval and all assoc values
@@ -55,6 +47,7 @@ cval* cval_mcr(cval* params, cval* body);
 
 /// Evaluate and free val
 cval* cval_eval(cenv* env, cval* val);
+cval* cval_call(cenv* env, cval* fun, cval* args);
 
 /// Add child to val's sexpr cells
 cval* cval_add(cval* val, cval* child);

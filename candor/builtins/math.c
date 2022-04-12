@@ -57,9 +57,9 @@ cval* builtin_mult(cenv* env, cval* arg) {
   return builtin_op(env, '*', arg);
 }
 
-void cenv_add_builtins_math(cenv* env) {
-  cenv_add_builtin(env, "+", builtin_add);
-  cenv_add_builtin(env, "-", builtin_sub);
-  cenv_add_builtin(env, "*", builtin_mult);
-  cenv_add_builtin(env, "/", builtin_div);
+void builtins_add_math(cenv* env) {
+  builtin_add_fun(env, "+", builtin_add);
+  builtin_add_fun(env, "-", builtin_sub);
+  builtin_add_fun(env, "*", builtin_mult);
+  builtin_add_fun(env, "/", builtin_div);
 }

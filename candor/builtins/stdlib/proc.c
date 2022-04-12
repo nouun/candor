@@ -46,8 +46,8 @@ cval* stdlib_env_unset(cenv* env, cval* args) {
   return out;
 }
 
-void cenv_add_stdlib_proc(cenv* env) {
-  cenv_add_builtin(env, "env/get", stdlib_env_get);
-  cenv_add_builtin(env, "env/set", stdlib_env_set);
-  cenv_add_builtin(env, "env/unset", stdlib_env_unset);
+void stdlib_add_proc(cenv* env) {
+  builtin_add_fun(env, "env/get", stdlib_env_get);
+  builtin_add_fun(env, "env/set", stdlib_env_set);
+  builtin_add_fun(env, "env/unset", stdlib_env_unset);
 }
