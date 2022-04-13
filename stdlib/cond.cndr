@@ -13,7 +13,7 @@
   (= 0 val))
 
 (defun (< first & args)
-  "Iterate through Aargs, checking if the
+  "Iterate through args, checking if the
 current value is less than the next value."
   (apply lt?
     (join (list first) args)))
