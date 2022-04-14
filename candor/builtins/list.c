@@ -73,10 +73,27 @@ cval* builtin_map(cenv* env, cval* args) {
 }
 
 cval* builtin_reduce(cenv* env, cval* args) {
-  (void)env;
-  (void)args;
-  // TODO: Implement reduce
-  return cval_err("func(reduce): not implemented");
+  CASSERT_COUNT("reduce", 3);
+  CASSERT_TYPE4("reduce", 0, CVAL_FUN, CVAL_BFUN, CVAL_MCR, CVAL_BMCR);
+  CASSERT_TYPE("reduce", 2, CVAL_SEXPR);
+
+  cval* fn  = cval_pop(args, 0);
+  cval* init = cval_pop(args, 0);
+  cval* lst = cval_take(args, 0);
+
+  while (lst->sexpr->count) {
+    cval* val = cval_pop(lst, 0);
+    
+    cval* args = cval_add(cval_sexpr(), init);
+    args = cval_add(args, val);
+
+    init  = cval_call(env, cval_copy(fn), args);
+  }
+
+  cval_del(fn);
+  cval_del(lst);
+
+  return init;
 }
 
 cval* builtin_filter(cenv* env, cval* args) {

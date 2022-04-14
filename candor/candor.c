@@ -34,17 +34,17 @@ void candor_init(void) {
 
 
   mpca_lang(MPCA_LANG_DEFAULT,
-            "number  \"number\"      : /-?[0-9]+/                        ; "
-            "string  \"string\"      : /\"(\\\\.|[^\"])*\"/              ; "
-            "keyword \"keyword\"     : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!?&]+/ ; "
-            "quot    \"quote\"       : \"'\" <nonquot>                   ; "
-            "qquot   \"quasiquote\"  : '`' <nonquot>                     ; "
-            "nonquot                 : <number> | <keyword> | <sexpr>      "
-            "                          | <string> | <comment>            ; "
-            "sexpr   \"sexpression\" : '(' <expr>* ')'                   ; "
-            "expr                    : <quot> | <qquot> | <nonquot>      ; "
-            "comment \"comment\"     : /;[^\\r\\n]*/                     ; "
-            "candor                  : /^/ <expr>* /$/                   ; ",
+            "number  \"number\"      : /-?[0-9]+/                         ; "
+            "string  \"string\"      : /\"(\\\\.|[^\"])*\"/               ; "
+            "keyword \"keyword\"     : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!?&%]+/ ; "
+            "quot    \"quote\"       : \"'\" <nonquot>                    ; "
+            "qquot   \"quasiquote\"  : '`' <nonquot>                      ; "
+            "nonquot                 : <number> | <keyword> | <sexpr>       "
+            "                          | <string> | <comment>             ; "
+            "sexpr   \"sexpression\" : '(' <expr>* ')'                    ; "
+            "expr                    : <quot> | <qquot> | <nonquot>       ; "
+            "comment \"comment\"     : /;[^\\r\\n]*/                      ; "
+            "candor                  : /^/ <expr>* /$/                    ; ",
             cndr_number, cndr_string, cndr_keyword, cndr_quot, cndr_qquot,
             cndr_nonquot, cndr_sexpr, cndr_expr, cndr_comment, candor_parser);
 

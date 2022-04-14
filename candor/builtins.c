@@ -100,7 +100,7 @@ cval* builtin_exit(cenv* env, cval* args) {
 }
 
 cval* builtin_eval(cenv* env, cval* args) {
-  CASSERT_COUNT("eval", 0);
+  CASSERT_COUNT("eval", 1);
 
   cval* body = cval_take(args, 0);
   return cval_eval(env, body);
@@ -194,7 +194,7 @@ cval* builtin_define(cenv* env, cval* args, char* name, bool local, bool macro) 
     fun = cval_take(args, 0);
 
     // TODO: Docs
-    free(docstr);
+    cval_del(docstr);
   }
 
   cval* lambda = cval_fun(params, fun);
