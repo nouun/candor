@@ -1,0 +1,15 @@
+(defproc (even? num)
+  "Check if NUM is an even number."
+  (eq? 0 (% num 2)))
+
+(defproc (odd? num)
+  "Check if NUM is an odd number."
+  (eq? 1 (% num 2)))
+
+(defproc (max vals)
+  "Return the largest value from VALS."
+  (reduce (lambda (lhs rhs) (if (lt? lhs rhs) lhs rhs)) (head vals) (tail vals)))
+
+(defproc (min vals)
+  "Return the smallest value from VALS."
+  (reduce (lambda (lhs rhs) (if (gt? lhs rhs) lhs rhs)) (head vals) (tail vals)))

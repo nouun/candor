@@ -1,30 +1,40 @@
 (import 'list)
 
-(defun (or lhs rhs)
+(defmcr (when cond body)
+  "Evaluate BODY if COND is true."
+  (if (eval cond)
+    (eval body) '()))
+
+(defmcr (unless cond body)
+  "Evaluate BODY if COND is false."
+  (if (eval cond)
+    '() (eval body)))
+
+(defproc (or lhs rhs)
   "Check if LHS or RHS is true."
   (+ lhs rhs))
 
-(defun (and lhs rhs)
+(defproc (and lhs rhs)
   "Check if LHS and RHS are true."
   (* lhs rhs))
 
-(defun (not val)
+(defproc (not val)
   "Check if VAL is false."
-  (= 0 val))
+  (eq? 0 val))
 
-(defun (< first & args)
+(defproc (< first & args)
   "Iterate through args, checking if the
 current value is less than the next value."
   (apply lt?
     (join (list first) args)))
 
-(defun (> first & rest)
+(defproc (> first & rest)
   "Iterate through args, checking if the
 current value is greater than the next value."
   (apply gt?
     (join (list first) args)))
 
-(defun (>= first & rest)
+(defproc (>= first & rest)
   "Iterate through args, checking if the
 current value is greater or equal to the
 next value."
@@ -34,7 +44,7 @@ next value."
       (= 1 (len rest))
       (>= (head rest) (tail rest))))
 
-(defun (<= lhs rhs)
+(defproc (<= lhs rhs)
   "Check if LHS is lesser or equal to RHS"
   (or (< lhs rhs)
       (eq? lhs rhs)))

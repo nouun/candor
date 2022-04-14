@@ -1,2 +1,25 @@
-(defun (apply fn args)
+(defproc (apply fn args)
+  "Call FN with ARGS."
   (eval (join (list fn) args)))
+
+(defproc (car lst)
+  "Get the first element from LST."
+  (head lst))
+
+(defproc (cdr lst)
+  "Return all elements other than the first from LST."
+  (tail lst))
+
+(defproc (caar lst) (car (car lst)))
+(defproc (cadr lst) (car (cdr lst)))
+(defproc (cdar lst) (cdr (car lst)))
+(defproc (cddr lst) (cdr (cdr lst)))
+
+(defproc (caaar lst) (car (car (car lst))))
+(defproc (caddr lst) (car (cdr (cdr lst))))
+(defproc (cadar lst) (car (cdr (car lst))))
+(defproc (caadr lst) (car (car (cdr lst))))
+(defproc (cdddr lst) (cdr (cdr (cdr lst))))
+(defproc (cdaar lst) (cdr (car (car lst))))
+(defproc (cdadr lst) (car (cdr (car lst))))
+(defproc (cddar lst) (cdr (cdr (car lst))))
